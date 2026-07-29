@@ -1,0 +1,344 @@
+/* =============================================================
+   Trondheim Trafikk — stil
+   ============================================================= */
+
+:root {
+  --bg:        #0b1018;
+  --panel:     rgba(18, 25, 36, 0.72);
+  --panel-kant:rgba(255, 255, 255, 0.09);
+  --tekst:     #e7edf7;
+  --dempet:    #93a1b6;
+  --gronn:     #3ddc84;
+  --gul:       #ffbe3c;
+  --rod:       #ff5a5a;
+  --bla:       #6fc4ff;
+  --kobber:    #c98a4b;
+  --radius:    16px;
+  --skygge:    0 18px 46px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--tekst);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app { position: relative; width: 100%; height: 100%; }
+
+#game {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+#game.drar { cursor: grabbing; }
+#game.pekbar { cursor: pointer; }
+
+/* ------------------------------ HUD ------------------------------ */
+#hud {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  background: linear-gradient(180deg, rgba(7,11,17,.92) 0%, rgba(7,11,17,0) 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+#hud > * { pointer-events: auto; }
+
+.hud-venstre { min-width: 0; }
+.hud-midt {
+  display: flex;
+  gap: 8px;
+  margin-inline: auto;
+  background: var(--panel);
+  border: 1px solid var(--panel-kant);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--skygge);
+}
+.hud-hoyre { display: flex; align-items: center; gap: 8px; }
+
+.merke { display: flex; align-items: center; gap: 10px; }
+.merke strong { display: block; font-size: 15px; letter-spacing: -0.2px; }
+.merke span:not(.merke-lys) { display: block; font-size: 11.5px; color: var(--dempet); }
+.merke-lys {
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 5px 4px;
+  background: #121926;
+  border: 1px solid var(--panel-kant);
+  border-radius: 7px;
+}
+.merke-lys i { width: 8px; height: 8px; border-radius: 50%; background: #2a3446; }
+.merke-lys i:nth-child(1) { background: var(--rod); box-shadow: 0 0 8px var(--rod); }
+.merke-lys i:nth-child(2) { background: #4a3a1c; }
+.merke-lys i:nth-child(3) { background: var(--gronn); box-shadow: 0 0 8px var(--gronn); }
+
+.stat { min-width: 62px; text-align: center; }
+.stat.bred { min-width: 104px; }
+.stat label {
+  display: block; font-size: 9.5px; text-transform: uppercase;
+  letter-spacing: .09em; color: var(--dempet); margin-bottom: 2px;
+}
+.stat output {
+  display: block; font-size: 19px; font-weight: 700;
+  font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+.stat small { display: block; font-size: 10.5px; color: var(--dempet); margin-top: 1px; }
+
+.bar {
+  height: 7px; border-radius: 99px; background: #1c2432;
+  overflow: hidden; margin: 5px 0 3px;
+}
+.bar span { display: block; height: 100%; width: 0%; border-radius: 99px; transition: width .18s linear; }
+.bar.flyt span  { background: linear-gradient(90deg, #2aa06a, var(--gronn)); }
+.bar.frust span { background: linear-gradient(90deg, var(--gul), var(--rod)); }
+
+.ikonknapp {
+  width: 38px; height: 38px;
+  border-radius: 11px;
+  border: 1px solid var(--panel-kant);
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--tekst);
+  font-size: 14px; line-height: 1;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.ikonknapp:hover { background: rgba(40, 52, 70, .85); }
+.ikonknapp:active { transform: scale(.94); }
+
+.fart-velger {
+  display: flex;
+  background: var(--panel);
+  border: 1px solid var(--panel-kant);
+  border-radius: 11px;
+  overflow: hidden;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.fart-velger button {
+  border: 0; background: transparent; color: var(--dempet);
+  padding: 10px 11px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.fart-velger button.valgt { background: rgba(111, 196, 255, .18); color: var(--bla); }
+
+/* --------------------------- inspektør --------------------------- */
+#inspektor {
+  position: absolute;
+  right: 16px; bottom: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  width: 244px;
+  background: var(--panel);
+  border: 1px solid var(--panel-kant);
+  border-radius: var(--radius);
+  padding: 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--skygge);
+  z-index: 6;
+  animation: opp .18s ease;
+}
+@keyframes opp { from { opacity: 0; transform: translateY(8px); } }
+
+.insp-topp { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.insp-topp h3 { margin: 0; font-size: 14.5px; }
+.insp-topp button {
+  border: 0; background: transparent; color: var(--dempet);
+  font-size: 14px; cursor: pointer; padding: 2px 4px;
+}
+.insp-hint { margin: 6px 0 12px; font-size: 11.5px; color: var(--dempet); line-height: 1.45; }
+.insp-rad { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; }
+.stepper { display: flex; align-items: center; gap: 4px; }
+.stepper button {
+  width: 26px; height: 26px; border-radius: 8px;
+  border: 1px solid var(--panel-kant); background: #17202e;
+  color: var(--tekst); cursor: pointer; font-size: 14px; line-height: 1;
+}
+.stepper output {
+  min-width: 52px; text-align: center; font-weight: 700;
+  font-variant-numeric: tabular-nums; font-size: 12.5px;
+}
+
+/* ------------------------------ tips ------------------------------ */
+#tips {
+  position: absolute;
+  left: 16px; bottom: 14px;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  font-size: 11.5px; color: var(--dempet);
+  background: rgba(12, 17, 25, .6);
+  border: 1px solid var(--panel-kant);
+  border-radius: 10px;
+  padding: 7px 11px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 4;
+}
+kbd {
+  background: #1b2432; border: 1px solid var(--panel-kant);
+  border-radius: 5px; padding: 1px 5px; font: inherit; font-size: 10.5px; color: var(--tekst);
+}
+
+/* ----------------------------- varsler ----------------------------- */
+#varsler {
+  position: absolute;
+  left: 50%; top: 96px;
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 6px;
+  align-items: center; pointer-events: none; z-index: 4;
+}
+.varsel {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(14, 21, 31, .82);
+  border: 1px solid var(--panel-kant);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: varselInn .25s ease, varselUt .4s ease 2.1s forwards;
+}
+.varsel b { color: var(--gronn); font-variant-numeric: tabular-nums; }
+.varsel.advarsel b { color: var(--gul); }
+@keyframes varselInn { from { opacity: 0; transform: translateY(-8px); } }
+@keyframes varselUt  { to   { opacity: 0; transform: translateY(-8px); } }
+
+/* ---------------------------- overlegg ---------------------------- */
+#overlegg {
+  position: absolute; inset: 0;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 24px;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(16,32,48,.72), rgba(6,9,14,.93));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  overflow-y: auto;
+}
+#overlegg.vis { display: flex; }
+
+.kort {
+  width: min(560px, 100%);
+  background: linear-gradient(180deg, rgba(23,31,44,.95), rgba(15,21,31,.95));
+  border: 1px solid var(--panel-kant);
+  border-radius: 22px;
+  padding: 32px;
+  box-shadow: var(--skygge);
+  text-align: center;
+  animation: kortInn .28s cubic-bezier(.2,.8,.3,1);
+}
+@keyframes kortInn { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+
+.stikkord {
+  display: inline-block;
+  font-size: 10.5px; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--kobber);
+  border: 1px solid rgba(201,138,75,.35);
+  border-radius: 99px; padding: 4px 11px; margin-bottom: 16px;
+}
+.kort h1 {
+  margin: 0 0 14px; font-size: clamp(34px, 7vw, 52px);
+  line-height: .98; letter-spacing: -.03em; font-weight: 800;
+}
+.kort h1 em { font-style: normal; color: var(--gronn); }
+.kort h2 { margin: 0 0 12px; font-size: clamp(22px, 4.5vw, 30px); letter-spacing: -.02em; }
+.ingress { margin: 0 auto 20px; max-width: 44ch; color: #c2cddd; font-size: 14.5px; line-height: 1.6; }
+.finstilt { margin: 14px 0 0; font-size: 11.5px; color: var(--dempet); }
+.fakta {
+  margin: 16px auto 20px; max-width: 46ch;
+  font-size: 12px; color: var(--dempet); font-style: italic;
+  border-top: 1px solid var(--panel-kant); padding-top: 14px;
+}
+
+.primar {
+  border: 0; border-radius: 13px; cursor: pointer;
+  background: linear-gradient(180deg, #47e58f, #22b46b);
+  color: #06231a; font-weight: 800; letter-spacing: -.01em;
+  box-shadow: 0 8px 22px rgba(45, 200, 125, .28);
+  transition: transform .1s, filter .15s;
+}
+.primar.stor { display: block; width: 100%; padding: 15px; font-size: 15.5px; }
+.primar.liten { width: 100%; margin-top: 12px; padding: 9px; font-size: 12.5px; }
+.primar:hover { filter: brightness(1.06); }
+.primar:active { transform: scale(.985); }
+
+.sekundar {
+  display: block; width: 100%; margin-top: 9px; padding: 12px;
+  border: 1px solid var(--panel-kant); border-radius: 13px;
+  background: transparent; color: var(--dempet);
+  font-size: 13.5px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.sekundar:hover { background: rgba(255,255,255,.05); color: var(--tekst); }
+
+.brief-fakta {
+  list-style: none; display: flex; gap: 10px; justify-content: center;
+  padding: 0; margin: 0 0 6px;
+}
+.brief-fakta li {
+  flex: 1; background: rgba(255,255,255,.04);
+  border: 1px solid var(--panel-kant); border-radius: 13px; padding: 12px 6px;
+}
+.brief-fakta strong { display: block; font-size: 21px; font-variant-numeric: tabular-nums; }
+.brief-fakta span { font-size: 10.5px; color: var(--dempet); }
+
+/* --------------------------- brettliste --------------------------- */
+.brettliste { display: grid; gap: 8px; margin-bottom: 20px; text-align: left; }
+.brettvalg {
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; padding: 12px 14px;
+  border: 1px solid var(--panel-kant); border-radius: 13px;
+  background: rgba(255,255,255,.03); color: var(--tekst);
+  cursor: pointer; font: inherit;
+  transition: border-color .15s, background .15s;
+}
+.brettvalg:hover:not(:disabled) { background: rgba(255,255,255,.07); border-color: rgba(111,196,255,.4); }
+.brettvalg.valgt { border-color: var(--gronn); background: rgba(61,220,132,.1); }
+.brettvalg:disabled { opacity: .42; cursor: not-allowed; }
+.brettvalg .nr {
+  width: 30px; height: 30px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 9px; background: #1b2432;
+  font-size: 12.5px; font-weight: 800; color: var(--dempet);
+}
+.brettvalg.valgt .nr { background: var(--gronn); color: #06231a; }
+.brettvalg .tekst { min-width: 0; }
+.brettvalg .tekst b { display: block; font-size: 13.5px; }
+.brettvalg .tekst i {
+  display: block; font-style: normal; font-size: 11.5px; color: var(--dempet);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.brettvalg .rekord { margin-left: auto; font-size: 11px; color: var(--kobber); flex: none; }
+
+/* ---------------------------- responsivt ---------------------------- */
+@media (max-width: 860px) {
+  #hud { flex-wrap: wrap; gap: 8px; padding: 10px; }
+  .hud-midt { order: 3; width: 100%; margin: 0; justify-content: space-between; }
+  .hud-venstre .merke span:not(.merke-lys) { display: none; }
+  .stat.bred { min-width: 0; flex: 1; }
+  #tips { display: none; }
+  #inspektor { left: 12px; right: 12px; width: auto; }
+  .kort { padding: 24px 20px; border-radius: 18px; }
+  #varsler { top: 182px; }
+}
+@media (max-width: 420px) {
+  .stat output { font-size: 16px; }
+  .ikonknapp { width: 34px; height: 34px; }
+}
