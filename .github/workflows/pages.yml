@@ -1,0 +1,66 @@
+name: Publiser til GitHub Pages
+
+# Legger spillet og wikien ut på nett ved hver push til main.
+#
+# Første gang må Pages slås på i repoet:
+#   Settings → Pages → Build and deployment → Source: GitHub Actions
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Én utrulling om gangen. Kjørende jobber får fullføre.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bygg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Ingen npm install — prosjektet har ingen avhengigheter.
+      - name: Bygg enkeltfil og wiki
+        run: |
+          node tools/bygg-enkeltfil.mjs
+          node tools/bygg-wiki.mjs
+
+      # Sett sammen akkurat det som skal ut. Vi laster ikke opp hele repoet:
+      # .git og verktøykoden har ingenting på en nettside å gjøre.
+      - name: Sett sammen nettstedet
+        run: |
+          mkdir -p _site/dist
+          cp index.html _site/
+          cp -r css js docs _site/
+          cp -r dist/wiki _site/wiki
+          cp dist/trondheim-trafikk.html _site/dist/
+          test -f _site/index.html
+          test -f _site/wiki/Hjem.html
+          test -f _site/dist/trondheim-trafikk.html
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  publiser:
+    needs: bygg
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.utrulling.outputs.page_url }}
+    steps:
+      - id: utrulling
+        uses: actions/deploy-pages@v4

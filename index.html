@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d121b">
+<meta name="description" content="Trondheim Trafikk — et lite simulatorspill der du holder trafikken i flyt gjennom Midtbyen, Bakklandet, Gløshaugen og Lade.">
+<title>Trondheim Trafikk — hold flyten i byen</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230d121b'/><circle cx='16' cy='9' r='3.4' fill='%23ff5a5a'/><circle cx='16' cy='17' r='3.4' fill='%23ffbe3c'/><circle cx='16' cy='25' r='3.4' fill='%233ddc84'/></svg>">
+</head>
+<body>
+
+<noscript>
+  <div class="uten-js">
+    <h1>Trondheim Trafikk</h1>
+    <p>Spillet kjører i nettleseren og trenger JavaScript. Skru det på og last siden på nytt.</p>
+  </div>
+</noscript>
+
+<div id="app">
+  <canvas id="game" aria-label="Trafikkart over Trondheim"></canvas>
+
+  <!-- ------------------------------ HUD ------------------------------ -->
+  <header id="hud">
+    <div class="hud-venstre">
+      <div class="merke">
+        <span class="merke-lys"><i></i><i></i><i></i></span>
+        <div>
+          <strong id="brettNavn">Trondheim Trafikk</strong>
+          <span id="brettUnder">Hold flyten i byen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hud-midt">
+      <div class="stat">
+        <label>Poeng</label>
+        <output id="statPoeng">0</output>
+        <small id="statMaal">av 0</small>
+      </div>
+      <div class="stat">
+        <label>Tid</label>
+        <output id="statTid">0:00</output>
+        <small id="statKombo">×1,0</small>
+      </div>
+      <div class="stat bred">
+        <label>Flyt</label>
+        <div class="bar flyt"><span id="barFlyt"></span></div>
+        <small id="statFlyt">100 %</small>
+      </div>
+      <div class="stat bred">
+        <label>Frustrasjon</label>
+        <div class="bar frust"><span id="barFrust"></span></div>
+        <small id="statLevert">0 levert</small>
+      </div>
+    </div>
+
+    <div class="hud-hoyre">
+      <button id="btnPause" class="ikonknapp" title="Pause (mellomrom)" aria-label="Pause">❚❚</button>
+      <div class="fart-velger" role="group" aria-label="Simuleringsfart">
+        <button data-fart="1" class="valgt">1×</button>
+        <button data-fart="2">2×</button>
+        <button data-fart="3">3×</button>
+      </div>
+      <button id="btnLyd" class="ikonknapp" title="Lyd av/på" aria-label="Skru av lyd" aria-pressed="true">🔊</button>
+      <button id="btnMeny" class="ikonknapp" title="Meny (Esc)" aria-label="Meny">☰</button>
+    </div>
+  </header>
+
+  <!-- --------------------------- inspektør --------------------------- -->
+  <aside id="inspektor" hidden>
+    <div class="insp-topp">
+      <h3 id="inspNavn">Kryss</h3>
+      <button id="inspLukk" aria-label="Lukk">✕</button>
+    </div>
+    <p class="insp-hint">Klikk krysset for å skifte grønn retning.</p>
+    <div class="insp-rad">
+      <span>Omløpstid</span>
+      <div class="stepper">
+        <button id="inspMinus" aria-label="Kortere">−</button>
+        <output id="inspPeriode">9,0 s</output>
+        <button id="inspPluss" aria-label="Lengre">+</button>
+      </div>
+    </div>
+    <button id="inspBytt" class="primar liten">Skift fase nå</button>
+  </aside>
+
+  <div id="tips">
+    <kbd>Klikk</kbd> et kryss for å skifte lys · <kbd>Rull</kbd> zoom · <kbd>Dra</kbd> flytt kartet
+  </div>
+
+  <div id="varsler" aria-live="polite"></div>
+
+  <!-- ---------------------------- overlegg ---------------------------- -->
+  <div id="overlegg" class="vis">
+    <div class="kort" id="kortStart">
+      <span class="stikkord">Simulatorspill · Trondheim</span>
+      <h1>Trondheim<br><em>Trafikk</em></h1>
+      <p class="ingress">
+        Byen står i kø fra Byåsen til Værnes. Du styrer lysene i kryssene —
+        få bilene fram til Nidarosdomen, Solsiden, Gløshaugen og Lerkendal
+        uten at frustrasjonen koker over.
+      </p>
+      <div id="brettliste" class="brettliste"></div>
+      <button class="primar stor" id="btnStart">Start spillet</button>
+      <p class="finstilt">Bruk musa, eller trykk direkte på skjermen. Fungerer også på mobil.</p>
+    </div>
+
+    <div class="kort" id="kortBrief" hidden>
+      <span class="stikkord" id="briefNr">Brett 1</span>
+      <h2 id="briefNavn">—</h2>
+      <p class="ingress" id="briefTekst">—</p>
+      <ul class="brief-fakta">
+        <li><strong id="briefMaal">0</strong><span>poengmål</span></li>
+        <li><strong id="briefTid">0</strong><span>sekunder</span></li>
+        <li><strong id="briefKryss">0</strong><span>lyskryss</span></li>
+      </ul>
+      <p class="fakta" id="briefFakta"></p>
+      <button class="primar stor" id="btnKjor">Kjør!</button>
+    </div>
+
+    <div class="kort" id="kortPause" hidden>
+      <span class="stikkord">Pause</span>
+      <h2>Trafikken står stille</h2>
+      <p class="ingress">Ingen kø vokser mens du tenker.</p>
+      <button class="primar stor" id="btnFortsett">Fortsett</button>
+      <button class="sekundar" id="btnTilMeny">Tilbake til menyen</button>
+    </div>
+
+    <div class="kort" id="kortSlutt" hidden>
+      <span class="stikkord" id="sluttStikk">Ferdig</span>
+      <h2 id="sluttTittel">—</h2>
+      <p class="ingress" id="sluttTekst">—</p>
+      <ul class="brief-fakta">
+        <li><strong id="sluttPoeng">0</strong><span>poeng</span></li>
+        <li><strong id="sluttLevert">0</strong><span>framme</span></li>
+        <li><strong id="sluttFlyt">0 %</strong><span>snittflyt</span></li>
+      </ul>
+      <button class="primar stor" id="btnNeste">Neste brett</button>
+      <button class="sekundar" id="btnPaNytt">Prøv igjen</button>
+      <button class="sekundar" id="btnMenyFraSlutt">Meny</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/render.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
