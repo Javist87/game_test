@@ -11,6 +11,13 @@
 </head>
 <body>
 
+<noscript>
+  <div class="uten-js">
+    <h1>Trondheim Trafikk</h1>
+    <p>Spillet kjører i nettleseren og trenger JavaScript. Skru det på og last siden på nytt.</p>
+  </div>
+</noscript>
+
 <div id="app">
   <canvas id="game" aria-label="Trafikkart over Trondheim"></canvas>
 
@@ -56,8 +63,8 @@
         <button data-fart="2">2×</button>
         <button data-fart="3">3×</button>
       </div>
-      <button id="btnLyd" class="ikonknapp" title="Lyd av/på" aria-label="Lyd">🔊</button>
-      <button id="btnMeny" class="ikonknapp" title="Meny" aria-label="Meny">☰</button>
+      <button id="btnLyd" class="ikonknapp" title="Lyd av/på" aria-label="Skru av lyd" aria-pressed="true">🔊</button>
+      <button id="btnMeny" class="ikonknapp" title="Meny (Esc)" aria-label="Meny">☰</button>
     </div>
   </header>
 

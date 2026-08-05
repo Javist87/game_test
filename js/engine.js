@@ -45,7 +45,6 @@
     this.periode = 8;
     this.gult = 1.3;
     this.gruppe = {};      // veiId -> 0 | 1
-    this.byttet = 0;       // teller manuelle bytter (for statistikk)
   }
 
   Lys.prototype.erGult = function () {
@@ -66,12 +65,9 @@
 
   /** Spilleren tvinger fram et fasebytte (går via gult). */
   Lys.prototype.bytt = function () {
-    if (!this.erGult()) {
-      this.t = this.periode - this.gult;
-      this.byttet++;
-      return true;
-    }
-    return false;
+    if (this.erGult()) return false;
+    this.t = this.periode - this.gult;
+    return true;
   };
 
   Lys.prototype.settPeriode = function (v) {
@@ -364,7 +360,6 @@
 
         bil.akk = idm(bil.fart, v0, gap, dv);
         bil.bremser = bil.akk < -0.9;
-        bil.blokkert = !slippGjennom && tilStopp < 30 * S;
       }
     }
   };
