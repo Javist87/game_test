@@ -2,7 +2,9 @@ name: Publiser til GitHub Pages
 
 # Legger spillet og wikien ut på nett ved hver push til main.
 #
-# Første gang må Pages slås på i repoet:
+# Pages slås på automatisk av configure-pages (enablement: true), så det
+# trengs ingen manuell oppsett i Settings. Skulle organisasjonen din blokkere
+# det, slår du det på selv under:
 #   Settings → Pages → Build and deployment → Source: GitHub Actions
 
 on:
@@ -28,7 +30,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       # Ingen npm install — prosjektet har ingen avhengigheter.
       - name: Bygg enkeltfil og wiki
@@ -49,7 +51,12 @@ jobs:
           test -f _site/wiki/Hjem.html
           test -f _site/dist/trondheim-trafikk.html
 
+      # enablement slår på Pages første gang. Uten den feiler jobben med
+      # «Get Pages site failed … Not Found» helt til noen har vært innom
+      # Settings manuelt.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

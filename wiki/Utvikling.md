@@ -159,14 +159,15 @@ Prosjektet er en statisk side, så alt som kan servere filer duger.
 ### GitHub Pages
 
 `.github/workflows/pages.yml` publiserer automatisk ved hver push til `main`.
-Den bygger både enkeltfila og wikien, og legger ut hele mappa.
+Den bygger enkeltfila og wikien, setter sammen `_site/` og ruller det ut.
 
-Første gang må Pages slås på i repoet:
+Pages slås på av seg selv første gang — `actions/configure-pages` kjøres med
+`enablement: true`. Blokkerer organisasjonen din det, slår du det på manuelt:
 
 > **Settings → Pages → Build and deployment → Source: GitHub Actions**
 
-Deretter ligger spillet på `https://<bruker>.github.io/<repo>/`, wikien på
-`/wiki/` og enkeltfila på `/dist/trondheim-trafikk.html`.
+Spillet ligger på `https://<bruker>.github.io/<repo>/`, wikien på `/wiki/` og
+enkeltfila på `/dist/trondheim-trafikk.html`.
 
 ### Alt annet
 

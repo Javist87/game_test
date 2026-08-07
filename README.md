@@ -38,9 +38,9 @@ ut maskinens nettverksadresse, så du kan åpne spillet på telefonen over samme
 ### 4. På nett
 
 `.github/workflows/pages.yml` publiserer automatisk til GitHub Pages ved hver
-push til `main`. Slå på Pages første gang under
-**Settings → Pages → Source: GitHub Actions**, så ligger spillet på
-`https://<bruker>.github.io/<repo>/`, wikien på `/wiki/`.
+push til `main`, og slår på Pages selv første gang. Spillet ligger på
+`https://<bruker>.github.io/<repo>/`, wikien på `/wiki/` og enkeltfila på
+`/dist/trondheim-trafikk.html`.
 
 ---
 
