@@ -9,8 +9,8 @@
     "start": "node tools/server.mjs",
     "bygg": "node tools/bygg-enkeltfil.mjs",
     "bygg-wiki": "node tools/bygg-wiki.mjs",
-    "bygg-alt": "node tools/bygg-enkeltfil.mjs && node tools/bygg-wiki.mjs",
-    "build": "node tools/bygg-enkeltfil.mjs && node tools/bygg-wiki.mjs"
+    "bygg-nettsted": "node tools/bygg-nettsted.mjs",
+    "build": "node tools/bygg-nettsted.mjs"
   },
   "engines": {
     "node": ">=18"

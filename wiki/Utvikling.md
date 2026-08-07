@@ -54,6 +54,7 @@ js/engine.js          simuleringen
 js/render.js          canvas-tegning
 js/game.js            spillflyt, input, HUD
 tools/server.mjs      lokal webserver, uten avhengigheter
+tools/bygg-nettsted.mjs    bygger hele dist/ og sjekker resultatet
 tools/bygg-enkeltfil.mjs   bygger dist/trondheim-trafikk.html
 tools/bygg-wiki.mjs        bygger dist/wiki/ fra wiki/*.md
 wiki/                 denne wikien, som markdown
@@ -138,6 +139,9 @@ faktisk pleier å ryke:
    kartet og at knip-zoom virker.
 5. **`file://`.** Dobbeltklikk `index.html` og spill et halvt minutt.
 6. **Enkeltfila.** `npm run bygg` og åpne resultatet.
+7. **Nettstedet.** `npm run bygg-nettsted`, åpne `dist/wiki/Hjem.html` og
+   følg «Spill spillet →». Lenken må virke både lokalt og på Pages — de to
+   oppsettene er like nettopp for å unngå at den bare virker ett sted.
 
 Endrer du på veinettet, er det verdt å sjekke i konsollen at alle ruter går opp:
 
@@ -159,7 +163,7 @@ Prosjektet er en statisk side, så alt som kan servere filer duger.
 ### GitHub Pages
 
 `.github/workflows/pages.yml` publiserer automatisk ved hver push til `main`.
-Den bygger enkeltfila og wikien, setter sammen `_site/` og ruller det ut.
+Den kjører `tools/bygg-nettsted.mjs` og ruller ut `dist/` som det er.
 
 Pages slås på av seg selv første gang — `actions/configure-pages` kjøres med
 `enablement: true`. Blokkerer organisasjonen din det, slår du det på manuelt:

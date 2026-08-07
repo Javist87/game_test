@@ -47,7 +47,7 @@ push til `main`, og slår på Pages selv første gang. Spillet ligger på
 ## Wiki
 
 Full dokumentasjon ligger i [`wiki/`](wiki/) — den vises direkte her på GitHub,
-og bygges også til en nettside med `npm run bygg-wiki`.
+og bygges også til en nettside med `npm run bygg-nettsted`.
 
 | Side | Handler om |
 | --- | --- |
@@ -131,6 +131,7 @@ js/engine.js               simuleringen: biler, ruter og trafikklys
 js/render.js               canvas-tegning av kart, kjøretøy og signaler
 js/game.js                 spillflyt, input, HUD og lagring
 tools/server.mjs           lokal webserver uten avhengigheter
+tools/bygg-nettsted.mjs    bygger hele dist/ — spill, wiki og enkeltfil
 tools/bygg-enkeltfil.mjs   bygger spillet til én HTML-fil
 tools/bygg-wiki.mjs        bygger wiki/*.md til en nettside
 wiki/                      dokumentasjonen

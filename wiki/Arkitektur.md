@@ -11,7 +11,7 @@ js/engine.js      simuleringen: biler, ruter og trafikklys
 js/render.js      canvas-tegning av kart, kjøretøy og signaler
 js/game.js        spillflyt, input, HUD og lagring
 tools/server.mjs  liten lokal webserver
-tools/bygg-*.mjs  byggeverktøy (enkeltfil og wiki)
+tools/bygg-*.mjs  byggeverktøy (nettsted, enkeltfil og wiki)
 ```
 
 ---
