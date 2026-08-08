@@ -1,5 +1,7 @@
 # Trondheim Trafikk
 
+**▶ [Spill nå](https://javist87.github.io/game_test/) · [Wiki](https://javist87.github.io/game_test/wiki/)**
+
 Et lite simulatorspill der oppgaven er å holde trafikken i flyt gjennom Trondheim.
 Du styrer lysene i kryssene mens biler, taxier og metrobusser skal fram til
 Nidarosdomen, Solsiden, Gløshaugen, Lerkendal og resten av byen.
@@ -37,16 +39,17 @@ ut maskinens nettverksadresse, så du kan åpne spillet på telefonen over samme
 
 ### 4. På nett
 
-`.github/workflows/pages.yml` publiserer automatisk til GitHub Pages ved hver
-push til `main`.
+Spillet ligger på **<https://javist87.github.io/game_test/>**, wikien på
+[`/wiki/`](https://javist87.github.io/game_test/wiki/) og enkeltfila på
+[`/dist/trondheim-trafikk.html`](https://javist87.github.io/game_test/dist/trondheim-trafikk.html).
 
-**Første gang må Pages slås på for hånd** — ett klikk, og det kan ikke gjøres
-fra en workflow:
+`.github/workflows/pages.yml` bygger og publiserer på nytt ved hver push til
+`main`.
+
+Setter du opp dette i et nytt repo, må Pages slås på for hånd én gang først —
+det kan ikke gjøres fra en workflow:
 
 > **Settings → Pages → Build and deployment → Source: GitHub Actions**
-
-Deretter ligger spillet på `https://<bruker>.github.io/<repo>/`, wikien på
-`/wiki/` og enkeltfila på `/dist/trondheim-trafikk.html`.
 
 ---
 

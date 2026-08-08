@@ -165,7 +165,9 @@ Prosjektet er en statisk side, så alt som kan servere filer duger.
 `.github/workflows/pages.yml` publiserer automatisk ved hver push til `main`.
 Den kjører `tools/bygg-nettsted.mjs` og ruller ut `dist/` som det er.
 
-**Første gang må Pages slås på for hånd:**
+Nettstedet ligger på <https://javist87.github.io/game_test/>.
+
+**I et nytt repo må Pages slås på for hånd én gang først:**
 
 > **Settings → Pages → Build and deployment → Source: GitHub Actions**
 
@@ -175,12 +177,15 @@ Pages-nettsted — API-et svarer `Resource not accessible by integration`, siden
 det krever administrasjonsrettigheter en workflow ikke får. Flagget står igjen
 fordi det virker i repoer der tokenet har rettighetene.
 
-Til den ene runden er gjort, feiler jobben slik — og bygget over den er grønt:
+Er ikke Pages slått på, feiler jobben slik — mens bygget over den er grønt:
 
 ```
 Get Pages site failed. Error: Not Found
 Create Pages site failed. Error: Resource not accessible by integration
 ```
+
+**Bare én workflow skal rulle ut til Pages.** Legger du til enda en som deler
+`concurrency: group: pages`, avbryter de hverandre og begge feiler.
 
 Spillet ligger på `https://<bruker>.github.io/<repo>/`, wikien på `/wiki/` og
 enkeltfila på `/dist/trondheim-trafikk.html`.

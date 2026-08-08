@@ -17,8 +17,8 @@ Lerkendal i sør og Lade mot nordøst.
 
 | Du vil… | Gjør dette |
 | --- | --- |
-| Bare spille | Åpne `index.html` — dobbeltklikk holder |
-| Spille uten å laste ned noe | Bruk nettadressen under [Publisering](Utvikling.md#publisering) |
+| Spille med én gang | [javist87.github.io/game_test](https://javist87.github.io/game_test/) |
+| Spille lokalt | Åpne `index.html` — dobbeltklikk holder |
 | Ha spillet i én enkelt fil | `npm run bygg` → `dist/trondheim-trafikk.html` |
 | Teste på mobil | `npm start`, åpne adressen den skriver ut |
 
