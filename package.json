@@ -1,0 +1,18 @@
+{
+  "name": "trondheim-trafikk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Simulatorspill der du styrer trafikklysene og holder flyten i Trondheim. Ren HTML, CSS og JavaScript — ingen avhengigheter.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/server.mjs",
+    "bygg": "node tools/bygg-enkeltfil.mjs",
+    "bygg-wiki": "node tools/bygg-wiki.mjs",
+    "bygg-nettsted": "node tools/bygg-nettsted.mjs",
+    "build": "node tools/bygg-nettsted.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

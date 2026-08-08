@@ -8,8 +8,7 @@
   var S = TT.SKALA;
   var VEIBREDDE = 19 * S;
 
-  function Kamera(canvas) {
-    this.canvas = canvas;
+  function Kamera() {
     this.x = TT.WORLD.w / 2;
     this.y = TT.WORLD.h / 2;
     this.zoom = 1;
@@ -45,7 +44,7 @@
   function Tegner(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    this.kamera = new Kamera(canvas);
+    this.kamera = new Kamera();
     this.w = 0;
     this.h = 0;
     this.tid = 0;
@@ -76,7 +75,7 @@
     this.elva();
     this.veier(motor);
     this.biler(motor);
-    this.noder(motor, tilstand);
+    this.noder(motor);
     this.lys(motor, tilstand);
     this.hendelser(motor);
   };
@@ -312,7 +311,7 @@
   }
 
   /* -------------------- steder -------------------- */
-  Tegner.prototype.noder = function (motor, tilstand) {
+  Tegner.prototype.noder = function (motor) {
     var ctx = this.ctx, s = this.kamera.skala();
     for (var i = 0; i < TT.NODES.length; i++) {
       var n = TT.NODES[i];

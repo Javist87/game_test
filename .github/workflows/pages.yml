@@ -1,0 +1,61 @@
+name: Publiser til GitHub Pages
+
+# Legger spillet og wikien ut på nett ved hver push til main.
+#
+# Pages slås på automatisk av configure-pages (enablement: true), så det
+# trengs ingen manuell oppsett i Settings. Skulle organisasjonen din blokkere
+# det, slår du det på selv under:
+#   Settings → Pages → Build and deployment → Source: GitHub Actions
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Én utrulling om gangen. Kjørende jobber får fullføre.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  bygg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Ingen npm install — prosjektet har ingen avhengigheter. Skriptet
+      # bygger dist/ og sjekker selv at ingenting mangler, så oppsettet er
+      # det samme lokalt som her. Vi laster ikke opp hele repoet: .git og
+      # verktøykoden har ingenting på en nettside å gjøre.
+      - name: Bygg nettstedet
+        run: node tools/bygg-nettsted.mjs
+
+      # enablement slår på Pages første gang. Uten den feiler jobben med
+      # «Get Pages site failed … Not Found» helt til noen har vært innom
+      # Settings manuelt.
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publiser:
+    needs: bygg
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.utrulling.outputs.page_url }}
+    steps:
+      - id: utrulling
+        uses: actions/deploy-pages@v4
