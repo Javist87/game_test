@@ -68,6 +68,8 @@ og bygges også til en nettside med `npm run bygg-nettsted`.
 | Handling | Mus / tastatur | Berøring |
 | --- | --- | --- |
 | Skift grønn retning i et kryss | klikk på krysset | trykk på krysset |
+| Steng eller åpne en vei | klikk midt på veien | trykk midt på veien |
+| Send bergingsbil til en ulykke | klikk ulykkesikonet | trykk ulykkesikonet |
 | Zoom | rull med musehjulet | knip med to fingre |
 | Flytt kartet | dra | dra |
 | Pause | `mellomrom` | pauseknappen |
@@ -79,6 +81,26 @@ Når du har valgt et kryss, kan du også justere **omløpstiden** — hvor lenge
 grønnfase varer. Korte omløp gir hyppigere bytter, lange omløp gir bedre flyt i
 hovedretningen. Det er her de fleste poengene ligger; se
 [Strategi](wiki/Strategi.md).
+
+### Hendelser på veinettet
+
+Du er ikke bare lysstyrer — du er operatør hos Vegvesenet, og byen lever sitt
+eget liv rundt deg:
+
+- 🚧 **Veiarbeid** dukker opp jevnlig og senker farten i ett kjørefelt til det
+  er ferdig.
+- 🚑 **Ulykker** blokkerer et felt nesten helt. Klikk ulykkesikonet for å sende
+  en bergingsbil og rydde raskere, ellers løser det seg selv etter en stund.
+- 👮 **Kontroller** gir en mindre fartsreduksjon mens de står på.
+- ⛔ **Steng eller åpne veier manuelt** ved å klikke midt på en gate — nyttig
+  for å lede trafikken rundt en ulykke eller et fullt kryss.
+- 🚨 **Utrykningskjøretøy** (ambulanse, brannbil, politi) dukker opp med jevne
+  mellomrom og kjører gjennom rødt lys — men sitter like fullt fast i ekte kø.
+  Hold veien fri foran dem for bonuspoeng; blir de stående for lenge, stiger
+  frustrasjonen raskere.
+
+Nye biler legger automatisk om ruta si rundt trege eller stengte veier, så en
+godt plassert veisperring kan avlaste et kryss som er i ferd med å låse seg.
 
 ### Reglene
 

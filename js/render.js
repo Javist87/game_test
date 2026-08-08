@@ -77,6 +77,7 @@
     this.biler(motor);
     this.noder(motor);
     this.lys(motor, tilstand);
+    this.hendelser(motor);
   };
 
   /* -------------------- landskap -------------------- */
@@ -283,6 +284,17 @@
           ctx.fillRect(-L / 2, -B / 2, Math.max(1, 1.6 * s), B);
         }
       }
+
+      if (bil.utrykning) {
+        var blink = Math.floor(this.tid * 6.5) % 2 === 0;
+        var barW = L * 0.3, barH = Math.max(2, B * 0.3);
+        ctx.fillStyle = blink ? '#ff4d4d' : '#4d9dff';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 10 * Math.max(0.7, s);
+        rundetRekt(ctx, -barW / 2, -B / 2 - barH * 0.75, barW, barH, barH / 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
       ctx.restore();
     }
   };
@@ -385,6 +397,58 @@
       });
     });
   };
+
+  /* -------------------- veihendelser -------------------- */
+  Tegner.prototype.hendelser = function (motor) {
+    var self = this;
+    motor.hendelserAktive.forEach(function (h) {
+      if (h.type === 'stengt') self.tegnStengtVei(h);
+      else self.tegnHendelseMarkor(h);
+    });
+  };
+
+  Tegner.prototype.tegnStengtVei = function (h) {
+    var ctx = this.ctx, s = this.kamera.skala();
+    var a = TT.NODE_BY_ID[h.vei.a], b = TT.NODE_BY_ID[h.vei.b];
+    var pa = this.p(a.x, a.y), pb = this.p(b.x, b.y);
+    ctx.save();
+    ctx.setLineDash([10 * s, 8 * s]);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(255, 90, 90, .78)';
+    ctx.lineWidth = Math.max(2, VEIBREDDE * s * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(pa[0], pa[1]);
+    ctx.lineTo(pb[0], pb[1]);
+    ctx.stroke();
+    ctx.restore();
+    var mid = this.p(h.x, h.y);
+    tegnHendelseIkon(ctx, TT.HENDELSE_TYPER.stengt.ikonEmoji, mid[0], mid[1], s, TT.HENDELSE_TYPER.stengt.farge);
+  };
+
+  Tegner.prototype.tegnHendelseMarkor = function (h) {
+    var ctx = this.ctx, s = this.kamera.skala();
+    var cfg = TT.HENDELSE_TYPER[h.type];
+    var p = this.p(h.x, h.y);
+    var puls = h.type === 'ulykke' ? (0.86 + Math.sin(this.tid * 6) * 0.14) : 1;
+    tegnHendelseIkon(ctx, cfg.ikonEmoji, p[0], p[1], s * puls, cfg.farge);
+  };
+
+  function tegnHendelseIkon(ctx, emoji, x, y, s, farge) {
+    var r = 12 * S * s;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(10, 15, 22, .85)';
+    ctx.fill();
+    ctx.strokeStyle = farge;
+    ctx.lineWidth = Math.max(1.2, 2 * s);
+    ctx.stroke();
+    ctx.font = Math.max(10, r * 1.15) + 'px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(emoji, x, y + 0.5);
+    ctx.restore();
+  }
 
   /* -------------------- ikoner -------------------- */
   function ikon(ctx, type, x, y, r, aktiv) {
