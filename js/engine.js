@@ -19,11 +19,13 @@
   };
 
   var BUSS = { lengde: 19 * S, bredde: 6.6 * S };
-  var FELT_OFFSET = 4.8 * S;   // avstand fra veiens midtlinje til feltets senter
-  var STOPP_INN = 9 * S;       // stopplinja ligger så mange px før krysset
+  var FELT_BREDDE = 9.6 * S;      // bredde per kjørefelt
+  var FELT_OFFSET = FELT_BREDDE / 2;   // avstand fra veiens midtlinje til det nærmeste feltets senter
+  var STOPP_INN = 9 * S;          // stopplinja ligger så mange px før krysset
   var MAKS_BILER = 320;
   var GRENSE_STILLE = 6 * S;   // px/s — under dette regnes bilen som "står"
   var TALEGRENSE = 0.55;     // så stor andel kø tåler byen uten å bli frustrert
+  var VEI_BASISKOST = 140;   // poeng for å utvide en vei med ett ekstra felt
 
   var FARGER = [
     '#e0e6ef', '#93a4bd', '#c9d4e4', '#7f8ea6', '#dfe6f0',
@@ -74,6 +76,23 @@
     if (r < 0.5) return 'veiarbeid';
     if (r < 0.82) return 'ulykke';
     return 'kontroll';
+  }
+
+  /** Ny feltgruppe: én kølisteliste per mulig kjørefelt (opp til feltMaks). */
+  function nyFeltGruppe(vei, retning) {
+    var lanes = [];
+    for (var i = 0; i < vei.feltMaks; i++) lanes.push([]);
+    return { vei: vei, retning: retning, lanes: lanes };
+  }
+
+  /** Velg det kjørefeltet (blant de som er bygget) med færrest biler akkurat nå. */
+  function velgFelt(gruppe, antallFelt) {
+    var best = 0, bestN = Infinity;
+    for (var i = 0; i < antallFelt; i++) {
+      var n = gruppe.lanes[i].length;
+      if (n < bestN) { bestN = n; best = i; }
+    }
+    return best;
   }
 
   /* ---------------------------------------------------------
@@ -155,6 +174,7 @@
     brett.noder.forEach(function (id) { this.aktivNode[id] = true; }, this);
 
     this.veier = [];
+    this.veiById = {};
     this.felt = {};
     this.naboer = {};
     this.lys = {};
@@ -193,6 +213,8 @@
       var na = TT.NODE_BY_ID[a], nb = TT.NODE_BY_ID[b];
       var dx = nb.x - na.x, dy = nb.y - na.y;
       var len = Math.hypot(dx, dy);
+      // Brede hovedfartsårer og motorveier tåler flere felt enn smale bygater.
+      var feltMaks = (rad[3] / S) >= 100 ? 3 : 2;
       var vei = {
         id: 'v' + i,
         a: a, b: b,
@@ -200,11 +222,14 @@
         fart: rad[3],
         len: len,
         dx: dx / len, dy: dy / len,
-        vinkel: Math.atan2(dy, dx)
+        vinkel: Math.atan2(dy, dx),
+        felt: 1,
+        feltMaks: feltMaks
       };
       self.veier.push(vei);
-      self.felt[vei.id + ':0'] = { vei: vei, retning: 0, biler: [] };
-      self.felt[vei.id + ':1'] = { vei: vei, retning: 1, biler: [] };
+      self.veiById[vei.id] = vei;
+      self.felt[vei.id + ':0'] = nyFeltGruppe(vei, 0);
+      self.felt[vei.id + ':1'] = nyFeltGruppe(vei, 1);
       (self.naboer[a] = self.naboer[a] || []).push({ vei: vei, retning: 0, til: b });
       (self.naboer[b] = self.naboer[b] || []).push({ vei: vei, retning: 1, til: a });
     });
@@ -267,6 +292,30 @@
     return { etapper: etapper, tid: dist[til] };
   };
 
+  /* -------- Kjørefelt: hvilket felt bilen er i / skal ta -------- */
+  Motor.prototype.nesteFelt = function (bil) {
+    var neste = bil.etapper[bil.etappe + 1];
+    return neste ? this.feltFor(neste.vei, neste.retning) : null;
+  };
+
+  /** Velger på nytt hvilket felt bilen sikter mot — så valget alltid
+      reflekterer køen slik den faktisk står nå, ikke slik den så ut
+      et helt veisegment tidligere. */
+  Motor.prototype.settNesteFelt = function (bil) {
+    var neste = bil.etapper[bil.etappe + 1];
+    if (!neste) { bil.nesteLane = 0; return; }
+    var gruppe = this.feltFor(neste.vei, neste.retning);
+    bil.nesteLane = velgFelt(gruppe, neste.vei.felt);
+  };
+
+  /** Bilen fremst i det feltet bilen sikter mot på neste etappe. */
+  Motor.prototype.nesteFeltFrontBil = function (bil) {
+    var nf = this.nesteFelt(bil);
+    if (!nf) return null;
+    var lane = nf.lanes[bil.nesteLane];
+    return lane && lane.length ? lane[0] : null;
+  };
+
   /* -------- Nye biler -------- */
   Motor.prototype.spawn = function () {
     if (this.biler.length >= MAKS_BILER) return;
@@ -283,8 +332,10 @@
 
     var forste = rute.etapper[0];
     var felt = this.feltFor(forste.vei, forste.retning);
-    if (felt.biler.length) {
-      var innerst = felt.biler[0];
+    var lane = velgFelt(felt, forste.vei.felt);
+    var koGruppe = felt.lanes[lane];
+    if (koGruppe.length) {
+      var innerst = koGruppe[0];
       if (innerst.s < innerst.lengde + BIL.s0 + 8 * S) return;   // ikke plass
     }
 
@@ -296,6 +347,7 @@
       etappe: 0,
       vei: forste.vei,
       retning: forste.retning,
+      lane: lane,
       s: 0,
       fart: forste.vei.fart * 0.55,
       akk: 0,
@@ -349,13 +401,19 @@
   };
 
   Motor.prototype.sorterFelt = function () {
-    for (var k in this.felt) this.felt[k].biler.length = 0;
-    for (var i = 0; i < this.biler.length; i++) {
-      var bil = this.biler[i];
-      this.feltFor(bil.vei, bil.retning).biler.push(bil);
+    for (var k in this.felt) {
+      var gruppe = this.felt[k];
+      for (var i = 0; i < gruppe.lanes.length; i++) gruppe.lanes[i].length = 0;
+    }
+    for (var b = 0; b < this.biler.length; b++) {
+      var bil = this.biler[b];
+      this.feltFor(bil.vei, bil.retning).lanes[bil.lane].push(bil);
     }
     for (var k2 in this.felt) {
-      this.felt[k2].biler.sort(function (x, y) { return x.s - y.s; });
+      var lanes = this.felt[k2].lanes;
+      for (var j = 0; j < lanes.length; j++) {
+        lanes[j].sort(function (x, y) { return x.s - y.s; });
+      }
     }
   };
 
@@ -378,54 +436,55 @@
     return !!(felt.hendelse && felt.hendelse.type === 'stengt');
   };
 
-  Motor.prototype.nesteFelt = function (bil) {
-    var neste = bil.etapper[bil.etappe + 1];
-    return neste ? this.feltFor(neste.vei, neste.retning) : null;
-  };
-
   Motor.prototype.beregnAkselerasjon = function () {
     for (var k in this.felt) {
       var felt = this.felt[k];
-      var biler = felt.biler;
       var stoppS = felt.vei.len - STOPP_INN;
       var v0Felt = this.feltFart(felt);
-      for (var i = 0; i < biler.length; i++) {
-        var bil = biler[i];
-        var v0 = v0Felt;
+      for (var lane = 0; lane < felt.vei.felt; lane++) {
+        var biler = felt.lanes[lane];
+        for (var i = 0; i < biler.length; i++) {
+          var bil = biler[i];
+          var v0 = v0Felt;
 
-        // Sakk ned i skarpe svinger
-        var neste = bil.etapper[bil.etappe + 1];
-        if (neste && stoppS - bil.s < 55 * S) {
-          var v1 = bil.retning === 0 ? felt.vei.vinkel : felt.vei.vinkel + Math.PI;
-          var v2 = neste.retning === 0 ? neste.vei.vinkel : neste.vei.vinkel + Math.PI;
-          var d = Math.abs(Math.atan2(Math.sin(v2 - v1), Math.cos(v2 - v1)));
-          if (d > 0.7) v0 = Math.min(v0, 42 * S);
-          else if (d > 0.35) v0 = Math.min(v0, 58 * S);
-        }
+          // Velg feltet på neste etappe på nytt hver tikk, ikke bare når
+          // bilen kjører inn i det — ellers stivner valget mot et enkelt
+          // felt selv om et nybygd felt ved siden av står tomt.
+          this.settNesteFelt(bil);
 
-        var gap = Infinity, dv = 0;
-
-        var foran = biler[i + 1];
-        if (foran) {
-          gap = foran.s - foran.lengde - bil.s;
-          dv = bil.fart - foran.fart;
-        }
-
-        var tilStopp = stoppS - bil.s;
-        var slippGjennom = this.kanKjore(bil);
-        if (!slippGjennom) {
-          if (tilStopp < gap) { gap = tilStopp; dv = bil.fart; }
-        } else {
-          var nf = this.nesteFelt(bil);
-          if (nf && nf.biler.length) {
-            var f0 = nf.biler[0];
-            var g = tilStopp + (f0.s - f0.lengde);
-            if (g < gap) { gap = g; dv = bil.fart - f0.fart; }
+          // Sakk ned i skarpe svinger
+          var neste = bil.etapper[bil.etappe + 1];
+          if (neste && stoppS - bil.s < 55 * S) {
+            var v1 = bil.retning === 0 ? felt.vei.vinkel : felt.vei.vinkel + Math.PI;
+            var v2 = neste.retning === 0 ? neste.vei.vinkel : neste.vei.vinkel + Math.PI;
+            var d = Math.abs(Math.atan2(Math.sin(v2 - v1), Math.cos(v2 - v1)));
+            if (d > 0.7) v0 = Math.min(v0, 42 * S);
+            else if (d > 0.35) v0 = Math.min(v0, 58 * S);
           }
-        }
 
-        bil.akk = idm(bil.fart, v0, gap, dv);
-        bil.bremser = bil.akk < -0.9;
+          var gap = Infinity, dv = 0;
+
+          var foran = biler[i + 1];
+          if (foran) {
+            gap = foran.s - foran.lengde - bil.s;
+            dv = bil.fart - foran.fart;
+          }
+
+          var tilStopp = stoppS - bil.s;
+          var slippGjennom = this.kanKjore(bil);
+          if (!slippGjennom) {
+            if (tilStopp < gap) { gap = tilStopp; dv = bil.fart; }
+          } else {
+            var f0 = this.nesteFeltFrontBil(bil);
+            if (f0) {
+              var g = tilStopp + (f0.s - f0.lengde);
+              if (g < gap) { gap = g; dv = bil.fart - f0.fart; }
+            }
+          }
+
+          bil.akk = idm(bil.fart, v0, gap, dv);
+          bil.bremser = bil.akk < -0.9;
+        }
       }
     }
   };
@@ -444,10 +503,8 @@
     if (!this.harGronn(bil)) return false;
     var nf = this.nesteFelt(bil);
     if (nf && this.feltStengt(nf)) return false;              // fysisk stengt — ingen slipper inn, ikke engang utrykning
-    if (nf && nf.biler.length) {
-      var f0 = nf.biler[0];
-      if (f0.s < f0.lengde + BIL.s0) return false;           // ikke blokker krysset
-    }
+    var f0 = this.nesteFeltFrontBil(bil);
+    if (f0 && f0.s < f0.lengde + BIL.s0) return false;         // ikke blokker krysset
     return true;
   };
 
@@ -481,18 +538,22 @@
         if (this.kanKjore(bil)) {
           var overskudd = bil.s - stoppS;
           var gammeltFelt = this.feltFor(bil.vei, bil.retning);
+          var gammeltLane = bil.lane;
+          var neste = bil.etapper[bil.etappe + 1];
+          var nesteFeltGruppe = this.feltFor(neste.vei, neste.retning);
+          var nyLane = bil.nesteLane;
           bil.etappe++;
-          var e = bil.etapper[bil.etappe];
-          bil.vei = e.vei;
-          bil.retning = e.retning;
-          bil.s = Math.min(overskudd, e.vei.len * 0.5);
+          bil.vei = neste.vei;
+          bil.retning = neste.retning;
+          bil.lane = nyLane;
+          bil.s = Math.min(overskudd, neste.vei.len * 0.5);
 
           // Flytt bilen til det nye feltet med én gang, slik at andre biler
-          // som krysser i samme frame ser riktig belegg og ikke begge slipper
-          // inn i samme felt samtidig (kanKjore ellers basert på forrige frame).
-          var idx = gammeltFelt.biler.indexOf(bil);
-          if (idx !== -1) gammeltFelt.biler.splice(idx, 1);
-          this.feltFor(bil.vei, bil.retning).biler.unshift(bil);
+          // som krysser i samme frame ser riktig belegg — både at plassen i
+          // det nye feltet er tatt, og at den gamle køen faktisk er kortere.
+          var idx = gammeltFelt.lanes[gammeltLane].indexOf(bil);
+          if (idx !== -1) gammeltFelt.lanes[gammeltLane].splice(idx, 1);
+          nesteFeltGruppe.lanes[nyLane].unshift(bil);
         } else {
           bil.s = stoppS;
           bil.fart = 0;
@@ -720,8 +781,10 @@
 
     var forste = rute.etapper[0];
     var felt = this.feltFor(forste.vei, forste.retning);
-    if (felt.biler.length) {
-      var innerst = felt.biler[0];
+    var lane = velgFelt(felt, forste.vei.felt);
+    var koGruppe = felt.lanes[lane];
+    if (koGruppe.length) {
+      var innerst = koGruppe[0];
       if (innerst.s < innerst.lengde + BIL.s0 + 8 * S) return;
     }
 
@@ -733,6 +796,7 @@
       etappe: 0,
       vei: forste.vei,
       retning: forste.retning,
+      lane: lane,
       s: 0,
       fart: forste.vei.fart * 0.6,
       akk: 0,
@@ -755,7 +819,7 @@
     this.melding(cfg.ikon + ' ' + cfg.navn + ' rykker ut mot ' + bil.malNavn, '', true);
   };
 
-  /* -------- Spillerens inngrep -------- */
+  /* -------- Spillerens inngrep: lys og veier -------- */
   Motor.prototype.lysVed = function (x, y, radius) {
     var best = null, bestD = radius * radius;
     for (var id in this.lys) {
@@ -766,7 +830,7 @@
     return best;
   };
 
-  /** Nærmeste vei innafor radius — for å stenge/åpne den manuelt. */
+  /** Nærmeste vei innafor radius — for å stenge/åpne den manuelt, eller utvide den. */
   Motor.prototype.veiVed = function (x, y, radius) {
     var best = null, bestD = radius * radius;
     for (var i = 0; i < this.veier.length; i++) {
@@ -792,9 +856,31 @@
     return best;
   };
 
+  /* -------- Spillerens inngrep: veibygging -------- */
+
+  /** Poengkostnad for å utvide denne veien med neste kjørefelt. */
+  Motor.prototype.veiKostnad = function (vei) {
+    return Math.round(VEI_BASISKOST * vei.felt);
+  };
+
+  Motor.prototype.kanUtvideVei = function (vei) {
+    return !!vei && vei.felt < vei.feltMaks && this.poeng >= this.veiKostnad(vei);
+  };
+
+  /** Utvider veien med ett kjørefelt i hver retning, betalt av poengsummen. */
+  Motor.prototype.utvidVei = function (veiId) {
+    var vei = this.veiById[veiId];
+    if (!this.kanUtvideVei(vei)) return false;
+    var kost = this.veiKostnad(vei);
+    this.poeng -= kost;
+    vei.felt++;
+    this.melding(vei.navn + ' utvidet til ' + vei.felt + ' felt', '−' + kost, false);
+    return true;
+  };
+
   TT.Motor = Motor;
   TT.BIL = BIL;
-  TT.FELT_OFFSET = FELT_OFFSET;
+  TT.FELT_BREDDE = FELT_BREDDE;
   TT.STOPP_INN = STOPP_INN;
   TT.HENDELSE_TYPER = HENDELSE_TYPER;
   TT.UTRYKNING = UTRYKNING;

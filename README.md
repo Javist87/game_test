@@ -70,6 +70,8 @@ og bygges også til en nettside med `npm run bygg-nettsted`.
 | Skift grønn retning i et kryss | klikk på krysset | trykk på krysset |
 | Steng eller åpne en vei | klikk midt på veien | trykk midt på veien |
 | Send bergingsbil til en ulykke | klikk ulykkesikonet | trykk ulykkesikonet |
+| Slå av/på veibygger | `B` eller 🚧-knappen | 🚧-knappen |
+| Utvid en vei (i veibygger) | klikk veien | trykk veien |
 | Zoom | rull med musehjulet | knip med to fingre |
 | Flytt kartet | dra | dra |
 | Pause | `mellomrom` | pauseknappen |
@@ -102,11 +104,22 @@ eget liv rundt deg:
 Nye biler legger automatisk om ruta si rundt trege eller stengte veier, så en
 godt plassert veisperring kan avlaste et kryss som er i ferd med å låse seg.
 
+### Veibygger
+
+Lysstyring løser bare halve problemet — noen ganger er gata rett og slett for
+smal. Slå på veibygger-modus (🚧 eller `B`) mens brettet spilles, og klikk en
+vei for å utvide den med et ekstra kjørefelt. Bygater kan få opptil to felt i
+hver retning, brede hovedfartsårer og motorveier opptil tre. Hvert felt koster
+poeng — kostnaden stiger for hvert felt du allerede har bygget — så det lønner
+seg å prioritere de gatene der køen faktisk bygger seg opp. Utvidelsene er
+ekte: bilene fordeler seg over feltene og kjører forbi hverandre, akkurat som
+i virkeligheten. Alle utvidelser nullstilles når du starter brettet på nytt.
+
 ### Reglene
 
 - **Poeng** får du for hvert kjøretøy som kommer fram. Rask levering gir bonus,
   metrobusser teller mest, og en rekke raske leveringer bygger opp en
-  kombomultiplikator (opptil ×3).
+  kombomultiplikator (opptil ×3). Poengene er også valutaen du bygger veier for.
 - **Flyt** viser hvor stor andel av bilene som faktisk er i bevegelse.
 - **Frustrasjon** stiger når køene blir for lange eller noen har stått fast for
   lenge. Går den til 100 %, låser byen seg og brettet er tapt.
@@ -168,6 +181,12 @@ Hvert kryss med tre eller flere gater får et lys med to grønnfaser. Fasene
 settes opp automatisk ved å prøve alle todelinger av tilfartsveiene og velge den
 der gatene i hver gruppe peker mest mulig i samme retning — altså naturlige
 «nord–sør»- og «øst–vest»-faser.
+
+Hver vei har et eget antall **kjørefelt** per retning. Biler velger det minst
+belastede feltet når de kjører inn på en ny gate, og kjører deretter uavhengig
+av feltene ved siden av — akkurat som separate køer inn mot krysset. Å utvide en
+vei i veibyggeren legger til enda et slikt felt, som gir flere biler plass til
+å stå ved siden av hverandre og flere som kan slippe gjennom per grønnfase.
 
 Detaljene ligger i [Arkitektur](wiki/Arkitektur.md) og
 [Simuleringen](wiki/Simuleringen.md).

@@ -10,8 +10,9 @@
   var el = {};
   ['game', 'hud', 'brettNavn', 'brettUnder', 'hendelseTeller', 'statPoeng', 'statMaal', 'statTid',
    'statKombo', 'barFlyt', 'statFlyt', 'barFrust', 'statLevert', 'btnPause',
-   'btnLyd', 'btnMeny', 'inspektor', 'inspNavn', 'inspLukk', 'inspPeriode',
-   'inspMinus', 'inspPluss', 'inspBytt', 'varsler', 'overlegg', 'kortStart',
+   'btnBygg', 'btnLyd', 'btnMeny', 'inspektor', 'inspNavn', 'inspLukk', 'inspPeriode',
+   'inspMinus', 'inspPluss', 'inspBytt', 'veiInspektor', 'veiNavn', 'veiLukk',
+   'veiFelt', 'btnUtvidVei', 'varsler', 'overlegg', 'kortStart',
    'kortBrief', 'kortPause', 'kortSlutt', 'brettliste', 'btnStart', 'briefNr',
    'briefNavn', 'briefTekst', 'briefMaal', 'briefTid', 'briefKryss', 'briefFakta',
    'btnKjor', 'btnFortsett', 'btnTilMeny', 'sluttStikk', 'sluttTittel', 'sluttTekst',
@@ -28,6 +29,9 @@
     lyd: true,
     valgt: null,
     hover: null,
+    byggModus: false,         // veibygger på/av
+    valgtVei: null,
+    hoverVei: null,
     flytSum: 0,
     flytAnt: 0
   };
@@ -152,7 +156,7 @@
 
   function tilMeny() {
     spill.modus = 'meny';
-    lukkInspektor();
+    nullstillValg();
     byggBrettliste();
     menyBakgrunn();
     visKort('kortStart');
@@ -179,14 +183,13 @@
   function nyttSpill() {
     var brett = TT.BRETT[spill.brettNr];
     motor = new TT.Motor(brett);
-    spill.valgt = null;
     spill.flytSum = 0;
     spill.flytAnt = 0;
     el.brettNavn.textContent = brett.navn;
     el.brettUnder.textContent = brett.undertittel;
     el.statMaal.textContent = 'av ' + brett.maal;
     sentrerPaBrett();
-    lukkInspektor();
+    nullstillValg();
     oppdaterHud();
   }
 
@@ -268,7 +271,7 @@
     el.sluttFlyt.textContent = snittFlyt + ' %';
     el.btnNeste.hidden = !(vant && spill.brettNr + 1 < TT.BRETT.length);
     visKort('kortSlutt');
-    lukkInspektor();
+    nullstillValg();
   }
 
   /* ---------------------------------------------------------
@@ -362,6 +365,48 @@
   }
 
   /* ---------------------------------------------------------
+     Veibygger
+     --------------------------------------------------------- */
+  function settByggModus(pa) {
+    spill.byggModus = pa;
+    el.btnBygg.classList.toggle('valgt', pa);
+    if (pa) { lukkInspektor(); spill.hover = null; }
+    else { lukkVeiInspektor(); spill.hoverVei = null; }
+  }
+
+  function apneVeiInspektor(vei) {
+    spill.valgtVei = vei.id;
+    el.veiNavn.textContent = vei.navn;
+    el.veiInspektor.hidden = false;
+    oppdaterVeiInspektor();
+  }
+
+  function lukkVeiInspektor() {
+    spill.valgtVei = null;
+    el.veiInspektor.hidden = true;
+  }
+
+  function oppdaterVeiInspektor() {
+    if (!spill.valgtVei || !motor) return;
+    var vei = motor.veiById[spill.valgtVei];
+    if (!vei) { lukkVeiInspektor(); return; }
+    el.veiFelt.textContent = vei.felt + ' av ' + vei.feltMaks;
+    if (vei.felt >= vei.feltMaks) {
+      el.btnUtvidVei.disabled = true;
+      el.btnUtvidVei.textContent = 'Maks utvidet';
+    } else {
+      var kost = motor.veiKostnad(vei);
+      el.btnUtvidVei.disabled = motor.poeng < kost;
+      el.btnUtvidVei.textContent = 'Utvid vei · −' + kost + ' p';
+    }
+  }
+
+  function nullstillValg() {
+    lukkInspektor();
+    settByggModus(false);
+  }
+
+  /* ---------------------------------------------------------
      Input
      --------------------------------------------------------- */
   var pekere = {};        // aktive fingre/musepekere
@@ -427,9 +472,15 @@
 
     if (motor && spill.modus === 'spiller') {
       var v = tegner.kamera.tilVerden(e.clientX - rekt.left, e.clientY - rekt.top, tegner.w, tegner.h);
-      var traff = motor.lysVed(v[0], v[1], klikkRadius());
-      spill.hover = traff ? traff.node.id : null;
-      el.game.classList.toggle('pekbar', !!traff && !antPekere);
+      if (spill.byggModus) {
+        var treffVei = motor.veiVed(v[0], v[1], veiKlikkRadius());
+        spill.hoverVei = treffVei ? treffVei.id : null;
+        el.game.classList.toggle('pekbar', !!treffVei && !antPekere);
+      } else {
+        var traff = motor.lysVed(v[0], v[1], klikkRadius());
+        spill.hover = traff ? traff.node.id : null;
+        el.game.classList.toggle('pekbar', !!traff && !antPekere);
+      }
     }
   });
 
@@ -439,7 +490,7 @@
   }
 
   function veiKlikkRadius() {
-    return (16 / Math.max(0.5, tegner.kamera.zoom) + 8) * TT.SKALA;
+    return (16 / Math.max(0.5, tegner.kamera.zoom) + 9) * TT.SKALA;
   }
 
   /** Klikk på et hendelsesikon: bergingsbil til ulykker, gjenåpne stengte veier. */
@@ -467,6 +518,18 @@
 
     var rekt = el.game.getBoundingClientRect();
     var v = tegner.kamera.tilVerden(sisteX - rekt.left, sisteY - rekt.top, tegner.w, tegner.h);
+
+    if (spill.byggModus) {
+      var vei = motor.veiVed(v[0], v[1], veiKlikkRadius());
+      if (vei) {
+        apneVeiInspektor(vei);
+        lyd.klikk();
+      } else {
+        lukkVeiInspektor();
+      }
+      return;
+    }
+
     var lys = motor.lysVed(v[0], v[1], klikkRadius());
     if (lys) {
       lys.bytt();
@@ -508,6 +571,8 @@
     }
     if (e.key === 'Escape') {
       if (spill.valgt) lukkInspektor();
+      else if (spill.valgtVei) lukkVeiInspektor();
+      else if (spill.byggModus) settByggModus(false);
       else if (spill.modus === 'spiller') pause(true);
       else if (spill.modus === 'brief' || spill.modus === 'slutt') tilMeny();
       return;
@@ -517,6 +582,9 @@
       if (spill.modus === 'spiller' || spill.modus === 'pause' || spill.modus === 'slutt') {
         nyttSpill(); start();
       }
+    }
+    if ((e.key === 'b' || e.key === 'B') && spill.modus === 'spiller') {
+      settByggModus(!spill.byggModus);
     }
   });
 
@@ -533,6 +601,7 @@
   });
 
   el.btnPause.addEventListener('click', function () { pause(spill.modus === 'spiller'); });
+  el.btnBygg.addEventListener('click', function () { settByggModus(!spill.byggModus); });
 
   // Midt i et brett skal ikke ☰ kaste bort runden — den pauser, og pausekortet
   // har knappen som faktisk går til menyen.
@@ -573,6 +642,15 @@
     if (lys) { lys.settPeriode(lys.periode + 1); oppdaterInspektor(); }
   });
 
+  el.veiLukk.addEventListener('click', lukkVeiInspektor);
+  el.btnUtvidVei.addEventListener('click', function () {
+    if (motor && spill.valgtVei && motor.utvidVei(spill.valgtVei)) {
+      oppdaterVeiInspektor();
+      oppdaterHud();
+      lyd.klikk();
+    }
+  });
+
   // Rotasjon på mobil endrer både canvasstørrelsen og HUD-høyden, så kartet
   // må legges opp på nytt. Vi venter til layouten har satt seg.
   var tilpassTimer = 0;
@@ -607,6 +685,7 @@
       spill.flytAnt++;
       oppdaterHud();
       oppdaterInspektor();
+      oppdaterVeiInspektor();
       tomHendelser();
       sjekkAdvarsel();
       if (motor.ferdig) avslutt();

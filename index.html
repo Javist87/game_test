@@ -59,6 +59,7 @@
 
     <div class="hud-hoyre">
       <button id="btnPause" class="ikonknapp" title="Pause (mellomrom)" aria-label="Pause">❚❚</button>
+      <button id="btnBygg" class="ikonknapp" title="Veibygger (B)" aria-label="Veibygger">🚧</button>
       <div class="fart-velger" role="group" aria-label="Simuleringsfart">
         <button data-fart="1" class="valgt">1×</button>
         <button data-fart="2">2×</button>
@@ -87,8 +88,22 @@
     <button id="inspBytt" class="primar liten">Skift fase nå</button>
   </aside>
 
+  <!-- --------------------------- veibygger --------------------------- -->
+  <aside id="veiInspektor" hidden>
+    <div class="insp-topp">
+      <h3 id="veiNavn">Vei</h3>
+      <button id="veiLukk" aria-label="Lukk">✕</button>
+    </div>
+    <p class="insp-hint">Utvid veien med et ekstra kjørefelt, betalt av poengsummen din, så flere biler kan kjøre side om side.</p>
+    <div class="insp-rad">
+      <span>Kjørefelt</span>
+      <output id="veiFelt">1 av 2</output>
+    </div>
+    <button id="btnUtvidVei" class="primar liten">Utvid vei</button>
+  </aside>
+
   <div id="tips">
-    <kbd>Klikk</kbd> kryss = lys · <kbd>Klikk</kbd> vei = steng/åpne · <kbd>Klikk</kbd> ulykke = bergingsbil · <kbd>Rull</kbd> zoom · <kbd>Dra</kbd> flytt kartet
+    <kbd>Klikk</kbd> kryss = lys · <kbd>Klikk</kbd> vei = steng/åpne · <kbd>B</kbd> veibygger · <kbd>Klikk</kbd> ulykke = bergingsbil · <kbd>Rull</kbd> zoom · <kbd>Dra</kbd> flytt kartet
   </div>
 
   <div id="varsler" aria-live="polite"></div>
@@ -100,9 +115,10 @@
       <h1>Trondheim<br><em>Trafikk</em></h1>
       <p class="ingress">
         Byen står i kø fra Byåsen til Værnes. Som operatør hos Vegvesenet
-        styrer du lysene, stenger og åpner veier, og sender bergingsbil til
-        ulykker — mens veiarbeid, kontroller og utrykningskjøretøy dukker
-        opp underveis. Få bilene fram uten at frustrasjonen koker over.
+        styrer du lysene, bygger ut trange gater med flere kjørefelt,
+        stenger og åpner veier, og sender bergingsbil til ulykker — mens
+        veiarbeid, kontroller og utrykningskjøretøy dukker opp underveis.
+        Få bilene fram uten at frustrasjonen koker over.
       </p>
       <div id="brettliste" class="brettliste"></div>
       <button class="primar stor" id="btnStart">Start spillet</button>
