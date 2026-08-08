@@ -40,6 +40,9 @@ hovedretningen. Det er her de fleste poengene ligger.
 - **Poeng** får du for hvert kjøretøy som kommer fram. Rask levering gir bonus,
   metrobusser teller mest, og en rekke raske leveringer bygger opp en
   kombomultiplikator (opptil ×3).
+- Syklister dukker opp innimellom bilene — de er tregere og kjører nærmere
+  veikanten, men gir også poeng når de kommer fram. Fotgjengere rusler langs
+  fortauene som ren stemning og påvirker ikke poengsummen.
 - **Flyt** viser hvor stor andel av bilene som faktisk er i bevegelse.
 - **Frustrasjon** stiger når køene blir for lange eller noen har stått fast for
   lenge. Går den til 100 %, låser byen seg og brettet er tapt.
@@ -92,3 +95,7 @@ Hvert kryss med tre eller flere gater får et lys med to grønnfaser. Fasene
 settes opp automatisk ved å prøve alle todelinger av tilfartsveiene og velge den
 der gatene i hver gruppe peker mest mulig i samme retning — altså naturlige
 «nord–sør»- og «øst–vest»-faser.
+
+I hvert kryss vises et lite lyshode med tre lamper per tilfartsvei, og
+kjørefeltet frem mot stopplinja fargelegges rødt eller grønt — slik ser man
+med det samme hvilken retning som har grønt, uten å måtte zoome inn.

@@ -19,6 +19,11 @@
   };
 
   var BUSS = { lengde: 19 * S, bredde: 6.6 * S };
+  var SYKKEL = {
+    lengde: 3.4 * S, bredde: 2 * S,
+    maksFart: 42 * S,             // syklister holder ikke biltempoet
+    feltOffset: 8 * S             // kjører nærmere veikanten, som et sykkelfelt
+  };
   var FELT_OFFSET = 4.8 * S;   // avstand fra veiens midtlinje til feltets senter
   var STOPP_INN = 9 * S;       // stopplinja ligger så mange px før krysset
   var MAKS_BILER = 320;
@@ -28,6 +33,19 @@
   var FARGER = [
     '#e0e6ef', '#93a4bd', '#c9d4e4', '#7f8ea6', '#dfe6f0',
     '#b34b4b', '#3f6fa8', '#d4a13c', '#4c8f6d', '#8a5fb0'
+  ];
+
+  var SYKKEL_FARGER = ['#ff7a45', '#3ddc84', '#ffbe3c', '#5fb8ff', '#e05fa0'];
+
+  /* ---------------------------------------------------------
+     Fotgjengere — rene statister uten kollisjon eller lys-logikk,
+     de følger bare veinettet på fortauskanten.
+     --------------------------------------------------------- */
+  var GANGFART = 20 * S;         // px/s i gjennomsnitt
+  var FOTGJENGER_OFFSET = 15 * S; // ut på "fortauet", utenfor kjørebanen
+  var MAKS_FOTGJENGERE = 130;
+  var FOTGJENGER_FARGER = [
+    '#f2c744', '#e0e6ef', '#ff8f5e', '#8fd3b0', '#7fb2e0', '#d98fd0'
   ];
 
   function vinkel180(a) { a = a % 180; return a < 0 ? a + 180 : a; }
@@ -121,6 +139,7 @@
     this.naboer = {};
     this.lys = {};
     this.biler = [];
+    this.fotgjengere = [];
 
     this.tid = 0;
     this.igjen = brett.varighet;
@@ -134,8 +153,10 @@
     this.ferdig = false;
     this.tapt = false;
     this.spawnAkk = 0;
+    this.fgSpawnAkk = 0;
     this.hendelser = [];      // meldinger ut til UI
     this.nesteId = 1;
+    this.nesteFgId = 1;
 
     this.byggGraf();
   }
@@ -178,6 +199,10 @@
     // Kilder og mål som faktisk henger sammen med veinettet
     this.kilder = this.brett.kilder.filter(function (id) { return self.naboer[id]; });
     this.mal = this.brett.mal.filter(function (id) { return self.naboer[id]; });
+
+    // Alle noder som faktisk er koblet på — fotgjengere kan gå mellom hvilke
+    // som helst av disse, ikke bare de offisielle kildene/målene for biltrafikk.
+    this.aktiveNodeIder = Object.keys(this.naboer);
   };
 
   Motor.prototype.feltFor = function (vei, retning) {
@@ -242,8 +267,9 @@
       if (innerst.s < innerst.lengde + BIL.s0 + 8 * S) return;   // ikke plass
     }
 
-    var erBuss = Math.random() < 0.11;
-    var erTaxi = !erBuss && Math.random() < 0.08;
+    var erSykkel = Math.random() < 0.14;
+    var erBuss = !erSykkel && Math.random() < 0.11;
+    var erTaxi = !erSykkel && !erBuss && Math.random() < 0.08;
     var bil = {
       id: this.nesteId++,
       etapper: rute.etapper,
@@ -253,11 +279,13 @@
       s: 0,
       fart: forste.vei.fart * 0.55,
       akk: 0,
-      lengde: erBuss ? BUSS.lengde : BIL.lengde,
-      bredde: erBuss ? BUSS.bredde : BIL.bredde,
+      lengde: erSykkel ? SYKKEL.lengde : (erBuss ? BUSS.lengde : BIL.lengde),
+      bredde: erSykkel ? SYKKEL.bredde : (erBuss ? BUSS.bredde : BIL.bredde),
+      feltOffset: erSykkel ? SYKKEL.feltOffset : FELT_OFFSET,
       buss: erBuss,
       taxi: erTaxi,
-      farge: erBuss ? '#0f9d63' : (erTaxi ? '#f2c744' : tilfeldig(FARGER)),
+      sykkel: erSykkel,
+      farge: erSykkel ? tilfeldig(SYKKEL_FARGER) : (erBuss ? '#0f9d63' : (erTaxi ? '#f2c744' : tilfeldig(FARGER))),
       malNavn: TT.NODE_BY_ID[til].navn,
       idealtid: rute.tid,
       levetid: 0,
@@ -267,6 +295,35 @@
       visVinkel: forste.retning === 0 ? forste.vei.vinkel : forste.vei.vinkel + Math.PI
     };
     this.biler.push(bil);
+  };
+
+  /* -------- Nye fotgjengere -------- */
+  Motor.prototype.spawnFotgjenger = function () {
+    if (this.fotgjengere.length >= MAKS_FOTGJENGERE) return;
+    var noder = this.aktiveNodeIder;
+    if (noder.length < 2) return;
+
+    var fra = tilfeldig(noder), til = tilfeldig(noder), forsok = 0;
+    while (til === fra && forsok++ < 8) til = tilfeldig(noder);
+    if (til === fra) return;
+
+    var rute = this.finnRute(fra, til);
+    if (!rute || !rute.etapper.length) return;
+
+    var forste = rute.etapper[0];
+    var fg = {
+      id: this.nesteFgId++,
+      etapper: rute.etapper,
+      etappe: 0,
+      vei: forste.vei,
+      retning: forste.retning,
+      s: 0,
+      fart: GANGFART * (0.8 + Math.random() * 0.4),
+      side: Math.random() < 0.5 ? -1 : 1,
+      faseOffset: Math.random() * Math.PI * 2,
+      farge: tilfeldig(FOTGJENGER_FARGER)
+    };
+    this.fotgjengere.push(fg);
   };
 
   /* -------- Hovedløkke -------- */
@@ -282,9 +339,13 @@
     this.spawnAkk += dt * this.brett.rate * this.rushFaktor();
     while (this.spawnAkk >= 1) { this.spawnAkk -= 1; this.spawn(); }
 
+    this.fgSpawnAkk += dt * this.brett.rate * 1.3 * this.rushFaktor();
+    while (this.fgSpawnAkk >= 1) { this.fgSpawnAkk -= 1; this.spawnFotgjenger(); }
+
     this.sorterFelt();
     this.beregnAkselerasjon();
     this.flyttBiler(dt);
+    this.flyttFotgjengere(dt);
     this.oppdaterStemning(dt);
 
     if (this.igjen <= 0 && !this.tapt) {
@@ -330,6 +391,7 @@
       for (var i = 0; i < biler.length; i++) {
         var bil = biler[i];
         var v0 = felt.vei.fart;
+        if (bil.sykkel) v0 = Math.min(v0, SYKKEL.maksFart);
 
         // Sakk ned i skarpe svinger
         var neste = bil.etapper[bil.etappe + 1];
@@ -439,10 +501,32 @@
     this.biler = beholdt;
   };
 
+  /** Fotgjengere har ingen fysikk eller lyslogikk — de rusler jevnt langs
+   *  fortauet og bytter etappe når de når enden av en gate. */
+  Motor.prototype.flyttFotgjengere = function (dt) {
+    var beholdt = [];
+    for (var i = 0; i < this.fotgjengere.length; i++) {
+      var fg = this.fotgjengere[i];
+      fg.s += fg.fart * dt;
+
+      if (fg.s >= fg.vei.len) {
+        if (fg.etappe + 1 >= fg.etapper.length) continue;   // framme
+        var overskudd = fg.s - fg.vei.len;
+        fg.etappe++;
+        var e = fg.etapper[fg.etappe];
+        fg.vei = e.vei;
+        fg.retning = e.retning;
+        fg.s = Math.min(overskudd, fg.vei.len * 0.4);
+      }
+      beholdt.push(fg);
+    }
+    this.fotgjengere = beholdt;
+  };
+
   Motor.prototype.levering = function (bil) {
     var tap = bil.levetid - bil.idealtid;
     var bonus = Math.max(0, Math.round(16 - tap * 0.9));
-    var grunn = bil.buss ? 22 : (bil.taxi ? 13 : 10);
+    var grunn = bil.buss ? 22 : (bil.taxi ? 13 : (bil.sykkel ? 9 : 10));
 
     if (!bil.sint && tap < 12) {
       this.streak++;
@@ -457,7 +541,7 @@
 
     if (bil.buss || bonus >= 14) {
       this.melding(
-        (bil.buss ? 'Metrobuss' : (bil.taxi ? 'Taxi' : 'Bil')) +
+        (bil.buss ? 'Metrobuss' : (bil.taxi ? 'Taxi' : (bil.sykkel ? 'Syklist' : 'Bil'))) +
         ' framme ved ' + bil.malNavn, '+' + gitt
       );
     }
@@ -511,6 +595,8 @@
 
   TT.Motor = Motor;
   TT.BIL = BIL;
+  TT.SYKKEL = SYKKEL;
   TT.FELT_OFFSET = FELT_OFFSET;
+  TT.FOTGJENGER_OFFSET = FOTGJENGER_OFFSET;
   TT.STOPP_INN = STOPP_INN;
 })(window.TT);

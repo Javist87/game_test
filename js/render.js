@@ -75,6 +75,7 @@
     this.fjord();
     this.elva();
     this.veier(motor);
+    this.fotgjengere(motor);
     this.biler(motor);
     this.noder(motor, tilstand);
     this.lys(motor, tilstand);
@@ -255,8 +256,9 @@
       else { bx = TT.NODE_BY_ID[vei.b].x - vei.dx * t; by = TT.NODE_BY_ID[vei.b].y - vei.dy * t; }
 
       var hx = Math.cos(bil.visVinkel), hy = Math.sin(bil.visVinkel);
-      bx += -hy * TT.FELT_OFFSET;
-      by += hx * TT.FELT_OFFSET;
+      var offset = bil.feltOffset || TT.FELT_OFFSET;
+      bx += -hy * offset;
+      by += hx * offset;
 
       var p = this.p(bx, by);
       if (p[0] < -40 || p[1] < -40 || p[0] > this.w + 40 || p[1] > this.h + 40) continue;
@@ -270,20 +272,92 @@
         ctx.shadowColor = 'rgba(255, 86, 86, .9)';
         ctx.shadowBlur = 10;
       }
-      ctx.fillStyle = bil.sint ? '#ff6b6b' : bil.farge;
-      rundetRekt(ctx, -L / 2, -B / 2, L, B, Math.min(2.5 * s, B / 2.4));
-      ctx.fill();
-      ctx.shadowBlur = 0;
 
-      if (s > 0.9) {
-        ctx.fillStyle = 'rgba(10,16,24,.45)';
-        rundetRekt(ctx, -L * 0.12, -B / 2 + 0.8 * s, L * 0.38, B - 1.6 * s, 1 * s);
+      if (bil.sykkel) {
+        tegnSykkel(ctx, L, B, bil.sint ? '#ff6b6b' : bil.farge, bil.bremser, s);
+      } else {
+        ctx.fillStyle = bil.sint ? '#ff6b6b' : bil.farge;
+        rundetRekt(ctx, -L / 2, -B / 2, L, B, Math.min(2.5 * s, B / 2.4));
         ctx.fill();
-        if (bil.bremser) {
-          ctx.fillStyle = '#ff5252';
-          ctx.fillRect(-L / 2, -B / 2, Math.max(1, 1.6 * s), B);
+        ctx.shadowBlur = 0;
+
+        if (s > 0.9) {
+          ctx.fillStyle = 'rgba(10,16,24,.45)';
+          rundetRekt(ctx, -L * 0.12, -B / 2 + 0.8 * s, L * 0.38, B - 1.6 * s, 1 * s);
+          ctx.fill();
+          if (bil.bremser) {
+            ctx.fillStyle = '#ff5252';
+            ctx.fillRect(-L / 2, -B / 2, Math.max(1, 1.6 * s), B);
+          }
         }
       }
+      ctx.restore();
+    }
+  };
+
+  /** Syklist sett ovenfra: to hjul, en tynn ramme og en liten "kropp". */
+  function tegnSykkel(ctx, L, B, farge, bremser, s) {
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = farge;
+    ctx.lineWidth = Math.max(0.8, 0.9 * s);
+    ctx.beginPath();
+    ctx.moveTo(-L / 2, 0);
+    ctx.lineTo(L / 2, 0);
+    ctx.stroke();
+
+    var hjulR = Math.max(0.8, B * 0.55);
+    ctx.fillStyle = 'rgba(10,14,20,.7)';
+    ctx.beginPath(); ctx.arc(-L / 2, 0, hjulR, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(L / 2, 0, hjulR, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = farge;
+    ctx.beginPath();
+    ctx.ellipse(-L * 0.05, 0, L * 0.32, B * 0.62, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (bremser) {
+      ctx.fillStyle = '#ff5252';
+      ctx.beginPath();
+      ctx.arc(-L / 2, 0, hjulR * 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  /* -------------------- fotgjengere -------------------- */
+  Tegner.prototype.fotgjengere = function (motor) {
+    var ctx = this.ctx, s = this.kamera.skala();
+    if (s < 0.4) return;   // for smått til å være verdt det
+
+    for (var i = 0; i < motor.fotgjengere.length; i++) {
+      var fg = motor.fotgjengere[i];
+      var vei = fg.vei;
+      var t = Math.max(0, Math.min(vei.len, fg.s));
+      var bx, by;
+      if (fg.retning === 0) { bx = TT.NODE_BY_ID[vei.a].x + vei.dx * t; by = TT.NODE_BY_ID[vei.a].y + vei.dy * t; }
+      else { bx = TT.NODE_BY_ID[vei.b].x - vei.dx * t; by = TT.NODE_BY_ID[vei.b].y - vei.dy * t; }
+
+      var vinkel = fg.retning === 0 ? vei.vinkel : vei.vinkel + Math.PI;
+      var hx = Math.cos(vinkel), hy = Math.sin(vinkel);
+      var offset = (VEIBREDDE / 2 + TT.FOTGJENGER_OFFSET) * fg.side;
+      bx += -hy * offset;
+      by += hx * offset;
+
+      var p = this.p(bx, by);
+      if (p[0] < -20 || p[1] < -20 || p[0] > this.w + 20 || p[1] > this.h + 20) continue;
+
+      var bob = Math.sin(this.tid * 7.5 + fg.faseOffset) * 1.1 * s;
+      var r = Math.max(1.3, 1.8 * s);
+
+      ctx.save();
+      ctx.fillStyle = 'rgba(6, 9, 14, .35)';
+      ctx.beginPath();
+      ctx.ellipse(p[0], p[1] + r * 0.9, r * 1.15, r * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = fg.farge;
+      ctx.beginPath();
+      ctx.arc(p[0], p[1] + bob, r, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
   };
@@ -364,28 +438,75 @@
         ctx.stroke();
       }
 
-      // en liten lysklump per tilfartsvei
+      // per tilfartsvei: fargelagt "matte" på stopplinja + et lite lyshode
       (motor.naboer[id] || []).forEach(function (kob) {
         var annen = TT.NODE_BY_ID[kob.til];
         var vx = annen.x - n.x, vy = annen.y - n.y;
         var l = Math.hypot(vx, vy) || 1;
         vx /= l; vy /= l;
-        var d = 21 * S;
-        var q = self.p(n.x + vx * d, n.y + vy * d);
+
         var gronn = lys.gruppe[kob.vei.id] === lys.fase;
-        var farge = gronn ? (lys.erGult() ? '#ffbe3c' : '#3ddc84') : '#ff5a5a';
+        var gult = lys.erGult();
+        var farge = gronn ? (gult ? '#ffbe3c' : '#3ddc84') : '#ff5a5a';
+
+        // Fargelagt felt over kjørebanen der bilene faktisk stopper — gjør
+        // retningen umiddelbart lesbar, selv uten å se selve lyshodet.
+        var stoppD = Math.min(TT.STOPP_INN, l * 0.42);
+        var stoppX = n.x + vx * stoppD, stoppY = n.y + vy * stoppD;
+        var latX = vy, latY = -vx;
+        var senterX = stoppX + latX * TT.FELT_OFFSET, senterY = stoppY + latY * TT.FELT_OFFSET;
+        var m1 = self.p(senterX - vx * 8 * S, senterY - vy * 8 * S);
+        var m2 = self.p(senterX + vx * 8 * S, senterY + vy * 8 * S);
+
+        ctx.save();
+        ctx.globalAlpha = gronn ? 0.55 : 0.4;
+        ctx.strokeStyle = farge;
+        ctx.shadowColor = farge;
+        ctx.shadowBlur = 10 * Math.max(0.6, s);
+        ctx.lineCap = 'round';
+        ctx.lineWidth = Math.max(2.6, 7.5 * S * s);
+        ctx.beginPath();
+        ctx.moveTo(m1[0], m1[1]);
+        ctx.lineTo(m2[0], m2[1]);
+        ctx.stroke();
+        ctx.restore();
+
+        // lyshode med tre lamper, orientert mot tilfartsveien
+        var d = 23 * S;
+        var q = self.p(n.x + vx * d, n.y + vy * d);
         ctx.save();
         ctx.translate(q[0], q[1]);
         ctx.rotate(Math.atan2(vy, vx));
-        ctx.fillStyle = farge;
-        ctx.shadowColor = farge;
-        ctx.shadowBlur = 8 * Math.max(0.6, s);
-        rundetRekt(ctx, -1.8 * s, -4.5 * s, 3.6 * s, 9 * s, 1.6 * s);
+
+        ctx.fillStyle = 'rgba(8, 10, 15, .85)';
+        rundetRekt(ctx, -2.8 * s, -8 * s, 5.6 * s, 16 * s, 2.2 * s);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,.14)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        lampe(ctx, 0, -4.6 * s, Math.max(0.9, 1.9 * s), '#ff5a5a', !gronn);
+        lampe(ctx, 0, 0, Math.max(0.9, 1.9 * s), '#ffbe3c', gronn && gult);
+        lampe(ctx, 0, 4.6 * s, Math.max(0.9, 1.9 * s), '#3ddc84', gronn && !gult);
         ctx.restore();
       });
     });
   };
+
+  function lampe(ctx, x, y, r, farge, aktiv) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    if (aktiv) {
+      ctx.shadowColor = farge;
+      ctx.shadowBlur = 9;
+      ctx.fillStyle = farge;
+    } else {
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,255,255,.09)';
+    }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
 
   /* -------------------- ikoner -------------------- */
   function ikon(ctx, type, x, y, r, aktiv) {
