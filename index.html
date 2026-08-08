@@ -11,6 +11,13 @@
 </head>
 <body>
 
+<noscript>
+  <div class="uten-js">
+    <h1>Trondheim Trafikk</h1>
+    <p>Spillet kjører i nettleseren og trenger JavaScript. Skru det på og last siden på nytt.</p>
+  </div>
+</noscript>
+
 <div id="app">
   <canvas id="game" aria-label="Trafikkart over Trondheim"></canvas>
 
@@ -22,6 +29,7 @@
         <div>
           <strong id="brettNavn">Trondheim Trafikk</strong>
           <span id="brettUnder">Hold flyten i byen</span>
+          <span id="hendelseTeller" class="hendelse-teller" hidden></span>
         </div>
       </div>
     </div>
@@ -57,8 +65,8 @@
         <button data-fart="2">2×</button>
         <button data-fart="3">3×</button>
       </div>
-      <button id="btnLyd" class="ikonknapp" title="Lyd av/på" aria-label="Lyd">🔊</button>
-      <button id="btnMeny" class="ikonknapp" title="Meny" aria-label="Meny">☰</button>
+      <button id="btnLyd" class="ikonknapp" title="Lyd av/på" aria-label="Skru av lyd" aria-pressed="true">🔊</button>
+      <button id="btnMeny" class="ikonknapp" title="Meny (Esc)" aria-label="Meny">☰</button>
     </div>
   </header>
 
@@ -95,7 +103,7 @@
   </aside>
 
   <div id="tips">
-    <kbd>Klikk</kbd> et kryss for å skifte lys · <kbd>B</kbd> veibygger · <kbd>Rull</kbd> zoom · <kbd>Dra</kbd> flytt kartet
+    <kbd>Klikk</kbd> kryss = lys · <kbd>Klikk</kbd> vei = steng/åpne · <kbd>B</kbd> veibygger · <kbd>Klikk</kbd> ulykke = bergingsbil · <kbd>Rull</kbd> zoom · <kbd>Dra</kbd> flytt kartet
   </div>
 
   <div id="varsler" aria-live="polite"></div>
@@ -106,10 +114,11 @@
       <span class="stikkord">Simulatorspill · Trondheim</span>
       <h1>Trondheim<br><em>Trafikk</em></h1>
       <p class="ingress">
-        Byen står i kø fra Byåsen til Værnes. Du styrer lysene i kryssene og
-        kan bygge ut trange gater med flere kjørefelt — få bilene fram til
-        Nidarosdomen, Solsiden, Gløshaugen og Lerkendal uten at frustrasjonen
-        koker over.
+        Byen står i kø fra Byåsen til Værnes. Som operatør hos Vegvesenet
+        styrer du lysene, bygger ut trange gater med flere kjørefelt,
+        stenger og åpner veier, og sender bergingsbil til ulykker — mens
+        veiarbeid, kontroller og utrykningskjøretøy dukker opp underveis.
+        Få bilene fram uten at frustrasjonen koker over.
       </p>
       <div id="brettliste" class="brettliste"></div>
       <button class="primar stor" id="btnStart">Start spillet</button>

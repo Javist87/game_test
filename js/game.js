@@ -8,7 +8,7 @@
   var LAGER = 'trondheim-trafikk.v1';
 
   var el = {};
-  ['game', 'hud', 'brettNavn', 'brettUnder', 'statPoeng', 'statMaal', 'statTid',
+  ['game', 'hud', 'brettNavn', 'brettUnder', 'hendelseTeller', 'statPoeng', 'statMaal', 'statTid',
    'statKombo', 'barFlyt', 'statFlyt', 'barFrust', 'statLevert', 'btnPause',
    'btnBygg', 'btnLyd', 'btnMeny', 'inspektor', 'inspNavn', 'inspLukk', 'inspPeriode',
    'inspMinus', 'inspPluss', 'inspBytt', 'veiInspektor', 'veiNavn', 'veiLukk',
@@ -129,6 +129,23 @@
     } else {
       el.overlegg.classList.remove('vis');
     }
+    settPauseIkon();
+  }
+
+  /** Pauseknappen viser alltid hva et klikk vil gjøre. */
+  function settPauseIkon() {
+    var spiller = spill.modus === 'spiller';
+    el.btnPause.textContent = spiller ? '❚❚' : '▶';
+    el.btnPause.setAttribute('aria-label', spiller ? 'Pause' : 'Fortsett');
+    el.btnPause.disabled = spill.modus !== 'spiller' && spill.modus !== 'pause';
+  }
+
+  /** HUD-en er høyere på smale skjermer. Kameraet og varslene må vite hvor mye
+      plass den faktisk tar, ellers havner kartet delvis bak den. */
+  function hudHoyde() {
+    var h = Math.round(el.hud.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--hud-h', h + 'px');
+    return h;
   }
 
   /** Kartet for det valgte brettet ligger stille bak menyen. */
@@ -188,11 +205,20 @@
     if (minX > maxX) return;
     var marg = 90 * TT.SKALA;
     var b = (maxX - minX) + marg * 2, h = (maxY - minY) + marg * 2;
-    tegner.kamera.x = (minX + maxX) / 2;
-    tegner.kamera.y = (minY + maxY) / 2;
-    var onsket = Math.min(tegner.w / b, (tegner.h - 90) / h);
+    // HUD-en spiser toppen, inspektøren bunnen. Mål høyden i stedet for å gjette,
+    // for på mobil er HUD-en dobbelt så høy som på skrivebordet.
+    var opptatt = hudHoyde() + 30;
+    var synligH = Math.max(160, tegner.h - opptatt);
+
+    var onsket = Math.min(tegner.w / b, synligH / h);
     onsket = Math.max(onsket, 0.46);        // på smale skjermer panorerer man heller
     tegner.kamera.zoom = onsket / tegner.kamera.basis;
+    tegner.kamera.begrens();
+
+    // Midten av brettet skal havne midt i det synlige feltet — altså litt
+    // under skjermmidten, siden HUD-en dekker toppen.
+    tegner.kamera.x = (minX + maxX) / 2;
+    tegner.kamera.y = (minY + maxY) / 2 - (opptatt / 2) / tegner.kamera.skala();
     tegner.kamera.begrens();
   }
 
@@ -210,7 +236,6 @@
       spill.modus = 'spiller';
       visKort(null);
     }
-    el.btnPause.textContent = spill.modus === 'pause' ? '▶' : '❚❚';
   }
 
   function avslutt() {
@@ -262,6 +287,20 @@
     el.barFlyt.style.width = motor.flyt + '%';
     el.barFrust.style.width = Math.round(motor.frustrasjon) + '%';
     el.statPoeng.style.color = motor.poeng >= motor.brett.maal ? 'var(--gronn)' : '';
+    oppdaterHendelseTeller();
+  }
+
+  /** Kompakt oversikt over aktive hendelser — supervisørens statuslinje. */
+  function oppdaterHendelseTeller() {
+    var tellere = {};
+    motor.hendelserAktive.forEach(function (h) { tellere[h.type] = (tellere[h.type] || 0) + 1; });
+    var deler = [];
+    ['veiarbeid', 'ulykke', 'kontroll', 'stengt'].forEach(function (type) {
+      if (tellere[type]) deler.push(TT.HENDELSE_TYPER[type].ikonEmoji + ' ' + tellere[type]);
+    });
+    if (motor.utrykninger.length) deler.push('🚨 ' + motor.utrykninger.length);
+    el.hendelseTeller.textContent = deler.join('   ');
+    el.hendelseTeller.hidden = !deler.length;
   }
 
   function formatTid(s) {
@@ -277,8 +316,8 @@
     sisteVarsel = na;
     var h = motor.hendelser.pop();
     motor.hendelser.length = 0;
-    varsle(h.tekst, h.verdi);
-    lyd.levert();
+    varsle(h.tekst, h.verdi, h.advarsel);
+    if (h.advarsel) lyd.advarsel(); else lyd.levert();
   }
 
   function varsle(tekst, verdi, advarsel) {
@@ -454,6 +493,18 @@
     return (16 / Math.max(0.5, tegner.kamera.zoom) + 9) * TT.SKALA;
   }
 
+  /** Klikk på et hendelsesikon: bergingsbil til ulykker, gjenåpne stengte veier. */
+  function handterHendelseKlikk(h) {
+    if (h.type === 'ulykke') {
+      if (motor.ryddOpp(h)) lyd.klikk(); else lyd.advarsel();
+    } else if (h.type === 'stengt') {
+      motor.byttVeisperring(h.vei);
+      lyd.klikk();
+    } else {
+      lyd.klikk();
+    }
+  }
+
   function pekerSlutt(e) {
     if (!pekere[e.pointerId]) return;
     var sisteX = pekere[e.pointerId].x, sisteY = pekere[e.pointerId].y;
@@ -484,9 +535,22 @@
       lys.bytt();
       apneInspektor(lys);
       lyd.klikk();
-    } else {
-      lukkInspektor();
+      return;
     }
+    var hendelse = motor.hendelseVed(v[0], v[1], klikkRadius());
+    if (hendelse) {
+      handterHendelseKlikk(hendelse);
+      lukkInspektor();
+      return;
+    }
+    var vei = motor.veiVed(v[0], v[1], veiKlikkRadius());
+    if (vei) {
+      motor.byttVeisperring(vei);
+      lyd.klikk();
+      lukkInspektor();
+      return;
+    }
+    lukkInspektor();
   }
 
   window.addEventListener('pointerup', pekerSlutt);
@@ -506,8 +570,11 @@
       return;
     }
     if (e.key === 'Escape') {
-      if (spill.modus === 'spiller') pause(true);
-      else if (spill.valgt) lukkInspektor();
+      if (spill.valgt) lukkInspektor();
+      else if (spill.valgtVei) lukkVeiInspektor();
+      else if (spill.byggModus) settByggModus(false);
+      else if (spill.modus === 'spiller') pause(true);
+      else if (spill.modus === 'brief' || spill.modus === 'slutt') tilMeny();
       return;
     }
     if (e.key === '1' || e.key === '2' || e.key === '3') settFart(parseInt(e.key, 10));
@@ -535,10 +602,19 @@
 
   el.btnPause.addEventListener('click', function () { pause(spill.modus === 'spiller'); });
   el.btnBygg.addEventListener('click', function () { settByggModus(!spill.byggModus); });
-  el.btnMeny.addEventListener('click', tilMeny);
+
+  // Midt i et brett skal ikke ☰ kaste bort runden — den pauser, og pausekortet
+  // har knappen som faktisk går til menyen.
+  el.btnMeny.addEventListener('click', function () {
+    if (spill.modus === 'spiller') pause(true);
+    else tilMeny();
+  });
+
   el.btnLyd.addEventListener('click', function () {
     spill.lyd = !spill.lyd;
     el.btnLyd.textContent = spill.lyd ? '🔊' : '🔈';
+    el.btnLyd.setAttribute('aria-label', spill.lyd ? 'Skru av lyd' : 'Skru på lyd');
+    el.btnLyd.setAttribute('aria-pressed', String(spill.lyd));
   });
 
   el.btnStart.addEventListener('click', visBrief);
@@ -575,8 +651,18 @@
     }
   });
 
+  // Rotasjon på mobil endrer både canvasstørrelsen og HUD-høyden, så kartet
+  // må legges opp på nytt. Vi venter til layouten har satt seg.
+  var tilpassTimer = 0;
   window.addEventListener('resize', function () {
     tegner.tilpassStorrelse();
+    hudHoyde();
+    clearTimeout(tilpassTimer);
+    tilpassTimer = setTimeout(function () {
+      tegner.tilpassStorrelse();
+      if (spill.modus === 'meny' || spill.modus === 'brief') sentrerPaBrett();
+      else tegner.kamera.begrens();
+    }, 160);
   });
 
   /* ---------------------------------------------------------
@@ -613,6 +699,7 @@
      Oppstart
      --------------------------------------------------------- */
   tegner.tilpassStorrelse();
+  hudHoyde();
   spill.brettNr = Math.min(lagret.apnet, TT.BRETT.length - 1);
   menyBakgrunn();
   byggBrettliste();

@@ -15,6 +15,8 @@
   --kobber:    #c98a4b;
   --radius:    16px;
   --skygge:    0 18px 46px rgba(0, 0, 0, 0.45);
+  /* Settes fra game.js — HUD-en er langt høyere på mobil enn på skrivebordet. */
+  --hud-h:     84px;
 }
 
 * { box-sizing: border-box; }
@@ -32,6 +34,13 @@ html, body {
 }
 
 #app { position: relative; width: 100%; height: 100%; }
+
+.uten-js {
+  position: absolute; inset: 0; z-index: 20;
+  display: grid; place-content: center; gap: 8px;
+  padding: 32px; text-align: center; background: var(--bg);
+}
+.uten-js p { color: var(--dempet); max-width: 40ch; line-height: 1.6; }
 
 #game {
   position: absolute;
@@ -73,11 +82,22 @@ html, body {
   -webkit-backdrop-filter: blur(14px);
   box-shadow: var(--skygge);
 }
-.hud-hoyre { display: flex; align-items: center; gap: 8px; }
+.hud-hoyre { display: flex; align-items: center; gap: 8px; flex: none; }
 
-.merke { display: flex; align-items: center; gap: 10px; }
-.merke strong { display: block; font-size: 15px; letter-spacing: -0.2px; }
+/* min-width:0 hele veien ned, ellers nekter flexboksen å krympe teksten og
+   brettnavnet legger seg oppå knappene på smale skjermer. */
+.merke { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.merke > div { min-width: 0; }
+.merke strong {
+  display: block; font-size: 15px; letter-spacing: -0.2px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .merke span:not(.merke-lys) { display: block; font-size: 11.5px; color: var(--dempet); }
+.hendelse-teller {
+  margin-top: 2px; font-size: 12px !important; font-weight: 700;
+  letter-spacing: .02em; color: var(--tekst) !important;
+}
+.hendelse-teller[hidden] { display: none !important; }
 .merke-lys {
   display: flex; flex-direction: column; gap: 3px;
   padding: 5px 4px;
@@ -204,8 +224,9 @@ kbd {
 /* ----------------------------- varsler ----------------------------- */
 #varsler {
   position: absolute;
-  left: 50%; top: 96px;
+  left: 50%; top: calc(var(--hud-h) + 12px);
   transform: translateX(-50%);
+  max-width: calc(100% - 24px);
   display: flex; flex-direction: column; gap: 6px;
   align-items: center; pointer-events: none; z-index: 4;
 }
@@ -339,16 +360,23 @@ kbd {
 
 /* ---------------------------- responsivt ---------------------------- */
 @media (max-width: 860px) {
-  #hud { flex-wrap: wrap; gap: 8px; padding: 10px; }
-  .hud-midt { order: 3; width: 100%; margin: 0; justify-content: space-between; }
-  .hud-venstre .merke span:not(.merke-lys) { display: none; }
+  #hud { flex-wrap: wrap; gap: 7px; padding: 8px 10px; }
+  .hud-venstre { flex: 1; }
+  .hud-midt { order: 3; width: 100%; margin: 0; padding: 6px 8px; justify-content: space-between; }
+  .hud-venstre .merke span:not(.merke-lys):not(.hendelse-teller) { display: none; }
+  .merke strong { font-size: 13.5px; }
+  .merke-lys { padding: 3px; gap: 2px; }
+  .merke-lys i { width: 6px; height: 6px; }
+  .stat { min-width: 0; }
   .stat.bred { min-width: 0; flex: 1; }
   #tips { display: none; }
   #inspektor, #veiInspektor { left: 12px; right: 12px; width: auto; }
   .kort { padding: 24px 20px; border-radius: 18px; }
-  #varsler { top: 182px; }
 }
 @media (max-width: 420px) {
-  .stat output { font-size: 16px; }
-  .ikonknapp { width: 34px; height: 34px; }
+  .stat label { font-size: 8.5px; }
+  .stat output { font-size: 15px; }
+  .stat small { font-size: 9.5px; }
+  .ikonknapp { width: 32px; height: 32px; border-radius: 9px; }
+  .fart-velger button { padding: 8px 8px; font-size: 11px; }
 }
