@@ -78,6 +78,11 @@ html, body {
 .merke { display: flex; align-items: center; gap: 10px; }
 .merke strong { display: block; font-size: 15px; letter-spacing: -0.2px; }
 .merke span:not(.merke-lys) { display: block; font-size: 11.5px; color: var(--dempet); }
+.hendelse-teller {
+  margin-top: 2px; font-size: 12px !important; font-weight: 700;
+  letter-spacing: .02em; color: var(--tekst) !important;
+}
+.hendelse-teller[hidden] { display: none !important; }
 .merke-lys {
   display: flex; flex-direction: column; gap: 3px;
   padding: 5px 4px;
@@ -331,7 +336,7 @@ kbd {
 @media (max-width: 860px) {
   #hud { flex-wrap: wrap; gap: 8px; padding: 10px; }
   .hud-midt { order: 3; width: 100%; margin: 0; justify-content: space-between; }
-  .hud-venstre .merke span:not(.merke-lys) { display: none; }
+  .hud-venstre .merke span:not(.merke-lys):not(.hendelse-teller) { display: none; }
   .stat.bred { min-width: 0; flex: 1; }
   #tips { display: none; }
   #inspektor { left: 12px; right: 12px; width: auto; }

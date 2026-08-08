@@ -8,7 +8,7 @@
   var LAGER = 'trondheim-trafikk.v1';
 
   var el = {};
-  ['game', 'hud', 'brettNavn', 'brettUnder', 'statPoeng', 'statMaal', 'statTid',
+  ['game', 'hud', 'brettNavn', 'brettUnder', 'hendelseTeller', 'statPoeng', 'statMaal', 'statTid',
    'statKombo', 'barFlyt', 'statFlyt', 'barFrust', 'statLevert', 'btnPause',
    'btnLyd', 'btnMeny', 'inspektor', 'inspNavn', 'inspLukk', 'inspPeriode',
    'inspMinus', 'inspPluss', 'inspBytt', 'varsler', 'overlegg', 'kortStart',
@@ -259,6 +259,20 @@
     el.barFlyt.style.width = motor.flyt + '%';
     el.barFrust.style.width = Math.round(motor.frustrasjon) + '%';
     el.statPoeng.style.color = motor.poeng >= motor.brett.maal ? 'var(--gronn)' : '';
+    oppdaterHendelseTeller();
+  }
+
+  /** Kompakt oversikt over aktive hendelser — supervisørens statuslinje. */
+  function oppdaterHendelseTeller() {
+    var tellere = {};
+    motor.hendelserAktive.forEach(function (h) { tellere[h.type] = (tellere[h.type] || 0) + 1; });
+    var deler = [];
+    ['veiarbeid', 'ulykke', 'kontroll', 'stengt'].forEach(function (type) {
+      if (tellere[type]) deler.push(TT.HENDELSE_TYPER[type].ikonEmoji + ' ' + tellere[type]);
+    });
+    if (motor.utrykninger.length) deler.push('🚨 ' + motor.utrykninger.length);
+    el.hendelseTeller.textContent = deler.join('   ');
+    el.hendelseTeller.hidden = !deler.length;
   }
 
   function formatTid(s) {
@@ -274,8 +288,8 @@
     sisteVarsel = na;
     var h = motor.hendelser.pop();
     motor.hendelser.length = 0;
-    varsle(h.tekst, h.verdi);
-    lyd.levert();
+    varsle(h.tekst, h.verdi, h.advarsel);
+    if (h.advarsel) lyd.advarsel(); else lyd.levert();
   }
 
   function varsle(tekst, verdi, advarsel) {
@@ -399,6 +413,22 @@
     return (26 / Math.max(0.5, tegner.kamera.zoom) + 12) * TT.SKALA;
   }
 
+  function veiKlikkRadius() {
+    return (16 / Math.max(0.5, tegner.kamera.zoom) + 8) * TT.SKALA;
+  }
+
+  /** Klikk på et hendelsesikon: bergingsbil til ulykker, gjenåpne stengte veier. */
+  function handterHendelseKlikk(h) {
+    if (h.type === 'ulykke') {
+      if (motor.ryddOpp(h)) lyd.klikk(); else lyd.advarsel();
+    } else if (h.type === 'stengt') {
+      motor.byttVeisperring(h.vei);
+      lyd.klikk();
+    } else {
+      lyd.klikk();
+    }
+  }
+
   function pekerSlutt(e) {
     if (!pekere[e.pointerId]) return;
     var sisteX = pekere[e.pointerId].x, sisteY = pekere[e.pointerId].y;
@@ -417,9 +447,22 @@
       lys.bytt();
       apneInspektor(lys);
       lyd.klikk();
-    } else {
-      lukkInspektor();
+      return;
     }
+    var hendelse = motor.hendelseVed(v[0], v[1], klikkRadius());
+    if (hendelse) {
+      handterHendelseKlikk(hendelse);
+      lukkInspektor();
+      return;
+    }
+    var vei = motor.veiVed(v[0], v[1], veiKlikkRadius());
+    if (vei) {
+      motor.byttVeisperring(vei);
+      lyd.klikk();
+      lukkInspektor();
+      return;
+    }
+    lukkInspektor();
   }
 
   window.addEventListener('pointerup', pekerSlutt);
