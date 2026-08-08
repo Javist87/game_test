@@ -165,10 +165,22 @@ Prosjektet er en statisk side, så alt som kan servere filer duger.
 `.github/workflows/pages.yml` publiserer automatisk ved hver push til `main`.
 Den kjører `tools/bygg-nettsted.mjs` og ruller ut `dist/` som det er.
 
-Pages slås på av seg selv første gang — `actions/configure-pages` kjøres med
-`enablement: true`. Blokkerer organisasjonen din det, slår du det på manuelt:
+**Første gang må Pages slås på for hånd:**
 
 > **Settings → Pages → Build and deployment → Source: GitHub Actions**
+
+Det kan ikke gjøres fra workflowen. `actions/configure-pages` kjøres riktignok
+med `enablement: true`, men `GITHUB_TOKEN` har ikke lov til å opprette et
+Pages-nettsted — API-et svarer `Resource not accessible by integration`, siden
+det krever administrasjonsrettigheter en workflow ikke får. Flagget står igjen
+fordi det virker i repoer der tokenet har rettighetene.
+
+Til den ene runden er gjort, feiler jobben slik — og bygget over den er grønt:
+
+```
+Get Pages site failed. Error: Not Found
+Create Pages site failed. Error: Resource not accessible by integration
+```
 
 Spillet ligger på `https://<bruker>.github.io/<repo>/`, wikien på `/wiki/` og
 enkeltfila på `/dist/trondheim-trafikk.html`.

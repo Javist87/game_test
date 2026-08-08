@@ -2,10 +2,15 @@ name: Publiser til GitHub Pages
 
 # Legger spillet og wikien ut på nett ved hver push til main.
 #
-# Pages slås på automatisk av configure-pages (enablement: true), så det
-# trengs ingen manuell oppsett i Settings. Skulle organisasjonen din blokkere
-# det, slår du det på selv under:
+# FØRSTE GANG må Pages slås på for hånd — det er ett klikk:
+#
 #   Settings → Pages → Build and deployment → Source: GitHub Actions
+#
+# Uten det feiler jobben med «Not Found» fra Pages-API-et. enablement: true
+# under prøver å slå det på selv, men GITHUB_TOKEN har ikke lov til å
+# opprette et Pages-nettsted («Resource not accessible by integration») —
+# det krever administrasjonsrettigheter en workflow ikke får. Flagget står
+# igjen fordi det virker i repoer der tokenet faktisk har rettighetene.
 
 on:
   push:
@@ -39,9 +44,8 @@ jobs:
       - name: Bygg nettstedet
         run: node tools/bygg-nettsted.mjs
 
-      # enablement slår på Pages første gang. Uten den feiler jobben med
-      # «Get Pages site failed … Not Found» helt til noen har vært innom
-      # Settings manuelt.
+      # Best forsøk på å slå på Pages selv. Lykkes ikke det, må noen innom
+      # Settings → Pages → Source: GitHub Actions én gang. Se toppen av fila.
       - uses: actions/configure-pages@v5
         with:
           enablement: true
