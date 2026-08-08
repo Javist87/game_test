@@ -480,11 +480,19 @@
         }
         if (this.kanKjore(bil)) {
           var overskudd = bil.s - stoppS;
+          var gammeltFelt = this.feltFor(bil.vei, bil.retning);
           bil.etappe++;
           var e = bil.etapper[bil.etappe];
           bil.vei = e.vei;
           bil.retning = e.retning;
           bil.s = Math.min(overskudd, e.vei.len * 0.5);
+
+          // Flytt bilen til det nye feltet med én gang, slik at andre biler
+          // som krysser i samme frame ser riktig belegg og ikke begge slipper
+          // inn i samme felt samtidig (kanKjore ellers basert på forrige frame).
+          var idx = gammeltFelt.biler.indexOf(bil);
+          if (idx !== -1) gammeltFelt.biler.splice(idx, 1);
+          this.feltFor(bil.vei, bil.retning).biler.unshift(bil);
         } else {
           bil.s = stoppS;
           bil.fart = 0;
