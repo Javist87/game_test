@@ -111,7 +111,7 @@
         '<span class="rekord"></span>';
       knapp.querySelector('b').textContent = brett.navn;
       knapp.querySelector('i').textContent = brett.undertittel;
-      knapp.querySelector('.rekord').textContent = rekord ? rekord + ' p' : '';
+      knapp.querySelector('.rekord').textContent = typeof rekord === 'number' ? rekord + ' p' : '';
       knapp.addEventListener('click', function () {
         spill.brettNr = i;
         byggBrettliste();

@@ -537,6 +537,8 @@
         }
         if (this.kanKjore(bil)) {
           var overskudd = bil.s - stoppS;
+          var gammeltFelt = this.feltFor(bil.vei, bil.retning);
+          var gammeltLane = bil.lane;
           var neste = bil.etapper[bil.etappe + 1];
           var nesteFeltGruppe = this.feltFor(neste.vei, neste.retning);
           var nyLane = bil.nesteLane;
@@ -545,9 +547,12 @@
           bil.retning = neste.retning;
           bil.lane = nyLane;
           bil.s = Math.min(overskudd, neste.vei.len * 0.5);
-          // Reserver plassen i det nye feltet med en gang — ellers kan en
-          // annen bil som krysser samme tikk (fra et annet felt eller en
-          // annen tilfartsvei) også tro feltet er ledig og havne oppå denne.
+
+          // Flytt bilen til det nye feltet med én gang, slik at andre biler
+          // som krysser i samme frame ser riktig belegg — både at plassen i
+          // det nye feltet er tatt, og at den gamle køen faktisk er kortere.
+          var idx = gammeltFelt.lanes[gammeltLane].indexOf(bil);
+          if (idx !== -1) gammeltFelt.lanes[gammeltLane].splice(idx, 1);
           nesteFeltGruppe.lanes[nyLane].unshift(bil);
         } else {
           bil.s = stoppS;
