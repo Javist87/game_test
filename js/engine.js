@@ -250,7 +250,9 @@
       var koblinger = this.naboer[n] || [];
       for (var k = 0; k < koblinger.length; k++) {
         var kob = koblinger[k];
-        var d = dist[n] + kob.vei.len / this.feltFart(this.feltFor(kob.vei, kob.retning));
+        var kobFelt = this.feltFor(kob.vei, kob.retning);
+        if (this.feltStengt(kobFelt)) continue;   // stengt vei — helt utelukket fra ruta
+        var d = dist[n] + kob.vei.len / this.feltFart(kobFelt);
         if (dist[kob.til] === undefined || d < dist[kob.til]) {
           dist[kob.til] = d;
           forrige[kob.til] = kob;
@@ -375,6 +377,11 @@
     return Math.max(4 * S, felt.vei.fart * HENDELSE_TYPER[felt.hendelse.type].fartFaktor);
   };
 
+  /** En manuelt stengt vei er fysisk sperret — ingen kjører inn i den. */
+  Motor.prototype.feltStengt = function (felt) {
+    return !!(felt.hendelse && felt.hendelse.type === 'stengt');
+  };
+
   Motor.prototype.nesteFelt = function (bil) {
     var neste = bil.etapper[bil.etappe + 1];
     return neste ? this.feltFor(neste.vei, neste.retning) : null;
@@ -441,6 +448,7 @@
     if (bil.etappe + 1 >= bil.etapper.length) return true;   // siste etappe = målet
     if (!this.harGronn(bil)) return false;
     var nf = this.nesteFelt(bil);
+    if (nf && this.feltStengt(nf)) return false;              // fysisk stengt — ingen slipper inn, ikke engang utrykning
     if (nf && nf.biler.length) {
       var f0 = nf.biler[0];
       if (f0.s < f0.lengde + BIL.s0) return false;           // ikke blokker krysset
@@ -655,8 +663,13 @@
       return;
     }
 
-    if (felt0.hendelse) this.avsluttHendelseManuelt(felt0.hendelse);
-    if (felt1.hendelse) this.avsluttHendelseManuelt(felt1.hendelse);
+    // En pågående ulykke/veiarbeid/kontroll skal ryddes på sin egen måte —
+    // ikke viskes vekk ved å stenge og åpne veien rett etterpå.
+    if ((felt0.hendelse && felt0.hendelse.type !== 'stengt') ||
+        (felt1.hendelse && felt1.hendelse.type !== 'stengt')) {
+      this.melding('🚧 ' + vei.navn + ' har alt en hendelse — vent til den er ryddet', '', true);
+      return;
+    }
 
     var pos = posPaVei(vei, null, 0.5);
     var h = {
