@@ -124,6 +124,11 @@ html, body {
 }
 .ikonknapp:hover { background: rgba(40, 52, 70, .85); }
 .ikonknapp:active { transform: scale(.94); }
+.ikonknapp.valgt {
+  background: rgba(61, 220, 132, .2);
+  border-color: rgba(61, 220, 132, .55);
+  color: var(--gronn);
+}
 
 .fart-velger {
   display: flex;
@@ -141,7 +146,7 @@ html, body {
 .fart-velger button.valgt { background: rgba(111, 196, 255, .18); color: var(--bla); }
 
 /* --------------------------- inspektør --------------------------- */
-#inspektor {
+#inspektor, #veiInspektor {
   position: absolute;
   right: 16px; bottom: 16px;
   bottom: max(16px, env(safe-area-inset-bottom));
@@ -278,6 +283,11 @@ kbd {
 .primar.liten { width: 100%; margin-top: 12px; padding: 9px; font-size: 12.5px; }
 .primar:hover { filter: brightness(1.06); }
 .primar:active { transform: scale(.985); }
+.primar:disabled {
+  cursor: not-allowed;
+  filter: grayscale(.5) brightness(.75);
+  box-shadow: none;
+}
 
 .sekundar {
   display: block; width: 100%; margin-top: 9px; padding: 12px;
@@ -334,7 +344,7 @@ kbd {
   .hud-venstre .merke span:not(.merke-lys) { display: none; }
   .stat.bred { min-width: 0; flex: 1; }
   #tips { display: none; }
-  #inspektor { left: 12px; right: 12px; width: auto; }
+  #inspektor, #veiInspektor { left: 12px; right: 12px; width: auto; }
   .kort { padding: 24px 20px; border-radius: 18px; }
   #varsler { top: 182px; }
 }

@@ -6,7 +6,6 @@
   'use strict';
 
   var S = TT.SKALA;
-  var VEIBREDDE = 19 * S;
 
   function Kamera(canvas) {
     this.canvas = canvas;
@@ -74,7 +73,7 @@
     this.bakgrunn();
     this.fjord();
     this.elva();
-    this.veier(motor);
+    this.veier(motor, tilstand);
     this.biler(motor);
     this.noder(motor, tilstand);
     this.lys(motor, tilstand);
@@ -173,13 +172,13 @@
   };
 
   /* -------------------- veier -------------------- */
-  Tegner.prototype.veier = function (motor) {
+  Tegner.prototype.veier = function (motor, tilstand) {
     var ctx = this.ctx, s = this.kamera.skala(), self = this;
 
     // inaktive veier som svak kontekst
     ctx.lineCap = 'round';
     ctx.strokeStyle = 'rgba(255,255,255,0.035)';
-    ctx.lineWidth = Math.max(1, VEIBREDDE * s * 0.7);
+    ctx.lineWidth = Math.max(1, TT.FELT_BREDDE * 2 * s * 0.7);
     TT.VEIER.forEach(function (rad) {
       if (motor.aktivNode[rad[0]] && motor.aktivNode[rad[1]]) return;
       var a = TT.NODE_BY_ID[rad[0]], b = TT.NODE_BY_ID[rad[1]];
@@ -190,23 +189,14 @@
       ctx.stroke();
     });
 
-    // kantlinje
-    ctx.strokeStyle = '#1b2534';
-    ctx.lineWidth = (VEIBREDDE + 6) * s;
-    this.veiBaner(motor, ctx);
-    // asfalt
-    ctx.strokeStyle = '#333e4f';
-    ctx.lineWidth = VEIBREDDE * s;
-    this.veiBaner(motor, ctx);
+    motor.veier.forEach(function (v) {
+      self.veiBane(v, tilstand, s);
+    });
 
-    // midtstiplet linje
-    if (s > 0.5) {
-      ctx.save();
-      ctx.setLineDash([7 * s, 9 * s]);
-      ctx.strokeStyle = 'rgba(226, 214, 160, .30)';
-      ctx.lineWidth = Math.max(0.8, 1.3 * s);
-      this.veiBaner(motor, ctx);
-      ctx.restore();
+    if (tilstand && tilstand.byggModus && s > 0.55) {
+      motor.veier.forEach(function (v) {
+        self.feltMerke(v, s);
+      });
     }
 
     // veinavn ved god zoom
@@ -224,23 +214,102 @@
         ctx.save();
         ctx.translate((pa[0] + pb[0]) / 2, (pa[1] + pb[1]) / 2);
         ctx.rotate(vinkel);
-        ctx.fillText(v.navn, 0, -VEIBREDDE * s / 2 - 4);
+        ctx.fillText(v.navn, 0, -TT.FELT_BREDDE * v.felt * s - 4);
         ctx.restore();
       });
       ctx.restore();
     }
   };
 
-  Tegner.prototype.veiBaner = function (motor, ctx) {
-    var self = this;
+  /** Tegner én vei — bredden vokser når spilleren bygger ut flere felt. */
+  Tegner.prototype.veiBane = function (v, tilstand, s) {
+    var ctx = this.ctx;
+    var a = TT.NODE_BY_ID[v.a], b = TT.NODE_BY_ID[v.b];
+    var pa = this.p(a.x, a.y), pb = this.p(b.x, b.y);
+    var bredde = TT.FELT_BREDDE * v.felt * 2 * s;
+    var byggModus = tilstand && tilstand.byggModus;
+    var valgt = byggModus && tilstand.valgtVei === v.id;
+    var hover = byggModus && tilstand.hoverVei === v.id;
+
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    motor.veier.forEach(function (v) {
-      var a = TT.NODE_BY_ID[v.a], b = TT.NODE_BY_ID[v.b];
-      var pa = self.p(a.x, a.y), pb = self.p(b.x, b.y);
+    ctx.moveTo(pa[0], pa[1]);
+    ctx.lineTo(pb[0], pb[1]);
+
+    ctx.strokeStyle = '#1b2534';
+    ctx.lineWidth = bredde + 6 * s;
+    ctx.stroke();
+
+    ctx.strokeStyle = '#333e4f';
+    ctx.lineWidth = bredde;
+    ctx.stroke();
+
+    // midtstiplet linje
+    if (s > 0.5) {
+      ctx.save();
+      ctx.setLineDash([7 * s, 9 * s]);
+      ctx.strokeStyle = 'rgba(226, 214, 160, .30)';
+      ctx.lineWidth = Math.max(0.8, 1.3 * s);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // skillelinjer mellom feltene i samme retning
+    if (v.felt > 1 && s > 0.55) {
+      ctx.save();
+      ctx.setLineDash([4 * s, 6 * s]);
+      ctx.strokeStyle = 'rgba(255,255,255,.16)';
+      ctx.lineWidth = Math.max(0.6, 1 * s);
+      var hx = -(pb[1] - pa[1]), hy = (pb[0] - pa[0]);
+      var l = Math.hypot(hx, hy) || 1;
+      hx /= l; hy /= l;
+      for (var i = 1; i < v.felt; i++) {
+        [1, -1].forEach(function (fortegn) {
+          var off = fortegn * i * TT.FELT_BREDDE * s;
+          ctx.beginPath();
+          ctx.moveTo(pa[0] + hx * off, pa[1] + hy * off);
+          ctx.lineTo(pb[0] + hx * off, pb[1] + hy * off);
+          ctx.stroke();
+        });
+      }
+      ctx.restore();
+    }
+
+    if (valgt || hover) {
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = valgt ? 'rgba(120, 200, 255, .95)' : 'rgba(255,255,255,.45)';
+      ctx.lineWidth = Math.max(1.4, (valgt ? 3 : 1.6) * s);
+      ctx.beginPath();
       ctx.moveTo(pa[0], pa[1]);
       ctx.lineTo(pb[0], pb[1]);
-    });
-    ctx.stroke();
+      ctx.stroke();
+      ctx.restore();
+    }
+  };
+
+  /** Liten «N/maks felt»-merkelapp midt på veien — bare i veibygger-modus. */
+  Tegner.prototype.feltMerke = function (v, s) {
+    var ctx = this.ctx;
+    var a = TT.NODE_BY_ID[v.a], b = TT.NODE_BY_ID[v.b];
+    var pa = this.p(a.x, a.y), pb = this.p(b.x, b.y);
+    var mx = (pa[0] + pb[0]) / 2, my = (pa[1] + pb[1]) / 2;
+    var kanUtvides = v.felt < v.feltMaks;
+    var tekst = v.felt + '/' + v.feltMaks;
+
+    ctx.save();
+    ctx.font = '700 10px ui-sans-serif, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    var bredde = ctx.measureText(tekst).width;
+    ctx.fillStyle = kanUtvides ? 'rgba(61,220,132,.88)' : 'rgba(20,26,36,.85)';
+    ctx.strokeStyle = 'rgba(0,0,0,.25)';
+    ctx.lineWidth = 1;
+    rundetRekt(ctx, mx - bredde / 2 - 5, my - 9, bredde + 10, 18, 9);
+    ctx.fill();
+    ctx.fillStyle = kanUtvides ? '#06231a' : '#93a1b6';
+    ctx.fillText(tekst, mx, my + 0.5);
+    ctx.restore();
   };
 
   /* -------------------- biler -------------------- */
@@ -255,8 +324,9 @@
       else { bx = TT.NODE_BY_ID[vei.b].x - vei.dx * t; by = TT.NODE_BY_ID[vei.b].y - vei.dy * t; }
 
       var hx = Math.cos(bil.visVinkel), hy = Math.sin(bil.visVinkel);
-      bx += -hy * TT.FELT_OFFSET;
-      by += hx * TT.FELT_OFFSET;
+      var offsetFelt = (bil.lane + 0.5) * TT.FELT_BREDDE;
+      bx += -hy * offsetFelt;
+      by += hx * offsetFelt;
 
       var p = this.p(bx, by);
       if (p[0] < -40 || p[1] < -40 || p[0] > this.w + 40 || p[1] > this.h + 40) continue;
