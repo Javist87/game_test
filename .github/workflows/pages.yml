@@ -2,7 +2,9 @@ name: Publiser til GitHub Pages
 
 # Legger spillet og wikien ut på nett ved hver push til main.
 #
-# Første gang må Pages slås på i repoet:
+# Pages slås på automatisk av configure-pages (enablement: true), så det
+# trengs ingen manuell oppsett i Settings. Skulle organisasjonen din blokkere
+# det, slår du det på selv under:
 #   Settings → Pages → Build and deployment → Source: GitHub Actions
 
 on:
@@ -28,32 +30,25 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      # Ingen npm install — prosjektet har ingen avhengigheter.
-      - name: Bygg enkeltfil og wiki
-        run: |
-          node tools/bygg-enkeltfil.mjs
-          node tools/bygg-wiki.mjs
+      # Ingen npm install — prosjektet har ingen avhengigheter. Skriptet
+      # bygger dist/ og sjekker selv at ingenting mangler, så oppsettet er
+      # det samme lokalt som her. Vi laster ikke opp hele repoet: .git og
+      # verktøykoden har ingenting på en nettside å gjøre.
+      - name: Bygg nettstedet
+        run: node tools/bygg-nettsted.mjs
 
-      # Sett sammen akkurat det som skal ut. Vi laster ikke opp hele repoet:
-      # .git og verktøykoden har ingenting på en nettside å gjøre.
-      - name: Sett sammen nettstedet
-        run: |
-          mkdir -p _site/dist
-          cp index.html _site/
-          cp -r css js docs _site/
-          cp -r dist/wiki _site/wiki
-          cp dist/trondheim-trafikk.html _site/dist/
-          test -f _site/index.html
-          test -f _site/wiki/Hjem.html
-          test -f _site/dist/trondheim-trafikk.html
-
+      # enablement slår på Pages første gang. Uten den feiler jobben med
+      # «Get Pages site failed … Not Found» helt til noen har vært innom
+      # Settings manuelt.
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist
 
   publiser:
     needs: bygg

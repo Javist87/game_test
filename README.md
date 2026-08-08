@@ -38,16 +38,16 @@ ut maskinens nettverksadresse, så du kan åpne spillet på telefonen over samme
 ### 4. På nett
 
 `.github/workflows/pages.yml` publiserer automatisk til GitHub Pages ved hver
-push til `main`. Slå på Pages første gang under
-**Settings → Pages → Source: GitHub Actions**, så ligger spillet på
-`https://<bruker>.github.io/<repo>/`, wikien på `/wiki/`.
+push til `main`, og slår på Pages selv første gang. Spillet ligger på
+`https://<bruker>.github.io/<repo>/`, wikien på `/wiki/` og enkeltfila på
+`/dist/trondheim-trafikk.html`.
 
 ---
 
 ## Wiki
 
 Full dokumentasjon ligger i [`wiki/`](wiki/) — den vises direkte her på GitHub,
-og bygges også til en nettside med `npm run bygg-wiki`.
+og bygges også til en nettside med `npm run bygg-nettsted`.
 
 | Side | Handler om |
 | --- | --- |
@@ -131,6 +131,7 @@ js/engine.js               simuleringen: biler, ruter og trafikklys
 js/render.js               canvas-tegning av kart, kjøretøy og signaler
 js/game.js                 spillflyt, input, HUD og lagring
 tools/server.mjs           lokal webserver uten avhengigheter
+tools/bygg-nettsted.mjs    bygger hele dist/ — spill, wiki og enkeltfil
 tools/bygg-enkeltfil.mjs   bygger spillet til én HTML-fil
 tools/bygg-wiki.mjs        bygger wiki/*.md til en nettside
 wiki/                      dokumentasjonen

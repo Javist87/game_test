@@ -38,7 +38,15 @@ const TYPER = {
 };
 
 const server = createServer(async (req, res) => {
-  let sti = decodeURIComponent((req.url || '/').split('?')[0]);
+  // decodeURIComponent kaster på ugyldige prosentkoder som /%ZZ. Skjer det
+  // her ute, river det med seg hele serveren — så vi svarer 400 i stedet.
+  let sti;
+  try {
+    sti = decodeURIComponent((req.url || '/').split('?')[0]);
+  } catch {
+    res.writeHead(400, { 'content-type': 'text/plain; charset=utf-8' });
+    return res.end('400 — ugyldig adresse');
+  }
   if (sti.endsWith('/')) sti += 'index.html';
 
   // Ikke server noe utenfor prosjektmappa, uansett hvor mange ../ som sendes.
