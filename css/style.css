@@ -3,18 +3,18 @@
    ============================================================= */
 
 :root {
-  --bg:        #0b1018;
-  --panel:     rgba(18, 25, 36, 0.72);
-  --panel-kant:rgba(255, 255, 255, 0.09);
-  --tekst:     #e7edf7;
-  --dempet:    #93a1b6;
-  --gronn:     #3ddc84;
-  --gul:       #ffbe3c;
-  --rod:       #ff5a5a;
-  --bla:       #6fc4ff;
-  --kobber:    #c98a4b;
-  --radius:    16px;
-  --skygge:    0 18px 46px rgba(0, 0, 0, 0.45);
+  --bg:        #ece3d0;
+  --panel:     #fbf7ec;
+  --panel-kant:rgba(43, 37, 25, 0.14);
+  --tekst:     #2e2a22;
+  --dempet:    #8b8168;
+  --gronn:     #4a9d6f;
+  --gul:       #edac2f;
+  --rod:       #dd5b48;
+  --bla:       #3f8fc4;
+  --kobber:    #b8763f;
+  --radius:    14px;
+  --skygge:    0 6px 18px rgba(45, 38, 22, 0.14);
 }
 
 * { box-sizing: border-box; }
@@ -54,7 +54,7 @@ html, body {
   gap: 14px;
   padding: 12px 16px;
   padding-top: max(12px, env(safe-area-inset-top));
-  background: linear-gradient(180deg, rgba(7,11,17,.92) 0%, rgba(7,11,17,0) 100%);
+  background: linear-gradient(180deg, rgba(236,227,208,.95) 0%, rgba(236,227,208,0) 100%);
   pointer-events: none;
   z-index: 5;
 }
@@ -69,8 +69,6 @@ html, body {
   border: 1px solid var(--panel-kant);
   border-radius: var(--radius);
   padding: 8px 12px;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   box-shadow: var(--skygge);
 }
 .hud-hoyre { display: flex; align-items: center; gap: 8px; }
@@ -81,11 +79,11 @@ html, body {
 .merke-lys {
   display: flex; flex-direction: column; gap: 3px;
   padding: 5px 4px;
-  background: #121926;
+  background: #e4d9bf;
   border: 1px solid var(--panel-kant);
   border-radius: 7px;
 }
-.merke-lys i { width: 8px; height: 8px; border-radius: 50%; background: #2a3446; }
+.merke-lys i { width: 8px; height: 8px; border-radius: 50%; background: #cdc0a1; }
 .merke-lys i:nth-child(1) { background: var(--rod); box-shadow: 0 0 8px var(--rod); }
 .merke-lys i:nth-child(2) { background: #4a3a1c; }
 .merke-lys i:nth-child(3) { background: var(--gronn); box-shadow: 0 0 8px var(--gronn); }
@@ -103,7 +101,7 @@ html, body {
 .stat small { display: block; font-size: 10.5px; color: var(--dempet); margin-top: 1px; }
 
 .bar {
-  height: 7px; border-radius: 99px; background: #1c2432;
+  height: 7px; border-radius: 99px; background: #ddd0af;
   overflow: hidden; margin: 5px 0 3px;
 }
 .bar span { display: block; height: 100%; width: 0%; border-radius: 99px; transition: width .18s linear; }
@@ -115,14 +113,12 @@ html, body {
   border-radius: 11px;
   border: 1px solid var(--panel-kant);
   background: var(--panel);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   color: var(--tekst);
   font-size: 14px; line-height: 1;
   cursor: pointer;
   transition: background .15s, transform .1s;
 }
-.ikonknapp:hover { background: rgba(40, 52, 70, .85); }
+.ikonknapp:hover { background: #f1e9d8; }
 .ikonknapp:active { transform: scale(.94); }
 
 .fart-velger {
@@ -131,14 +127,12 @@ html, body {
   border: 1px solid var(--panel-kant);
   border-radius: 11px;
   overflow: hidden;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 .fart-velger button {
   border: 0; background: transparent; color: var(--dempet);
   padding: 10px 11px; font-size: 12px; font-weight: 700; cursor: pointer;
 }
-.fart-velger button.valgt { background: rgba(111, 196, 255, .18); color: var(--bla); }
+.fart-velger button.valgt { background: rgba(63, 143, 196, .16); color: var(--bla); }
 
 /* --------------------------- inspektør --------------------------- */
 #inspektor {
@@ -150,8 +144,6 @@ html, body {
   border: 1px solid var(--panel-kant);
   border-radius: var(--radius);
   padding: 14px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   box-shadow: var(--skygge);
   z-index: 6;
   animation: opp .18s ease;
@@ -169,7 +161,7 @@ html, body {
 .stepper { display: flex; align-items: center; gap: 4px; }
 .stepper button {
   width: 26px; height: 26px; border-radius: 8px;
-  border: 1px solid var(--panel-kant); background: #17202e;
+  border: 1px solid var(--panel-kant); background: #f1e9d8;
   color: var(--tekst); cursor: pointer; font-size: 14px; line-height: 1;
 }
 .stepper output {
@@ -183,16 +175,14 @@ html, body {
   left: 16px; bottom: 14px;
   bottom: max(14px, env(safe-area-inset-bottom));
   font-size: 11.5px; color: var(--dempet);
-  background: rgba(12, 17, 25, .6);
+  background: var(--panel);
   border: 1px solid var(--panel-kant);
   border-radius: 10px;
   padding: 7px 11px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
   z-index: 4;
 }
 kbd {
-  background: #1b2432; border: 1px solid var(--panel-kant);
+  background: #e4d9bf; border: 1px solid var(--panel-kant);
   border-radius: 5px; padding: 1px 5px; font: inherit; font-size: 10.5px; color: var(--tekst);
 }
 
@@ -206,13 +196,12 @@ kbd {
 }
 .varsel {
   display: flex; align-items: center; gap: 8px;
-  background: rgba(14, 21, 31, .82);
+  background: var(--panel);
   border: 1px solid var(--panel-kant);
   border-radius: 99px;
   padding: 6px 13px;
   font-size: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: var(--skygge);
   animation: varselInn .25s ease, varselUt .4s ease 2.1s forwards;
 }
 .varsel b { color: var(--gronn); font-variant-numeric: tabular-nums; }
@@ -226,9 +215,7 @@ kbd {
   display: none;
   align-items: center; justify-content: center;
   padding: 24px;
-  background: radial-gradient(120% 90% at 50% 0%, rgba(16,32,48,.72), rgba(6,9,14,.93));
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(46, 42, 34, .38);
   z-index: 10;
   overflow-y: auto;
 }
@@ -236,7 +223,7 @@ kbd {
 
 .kort {
   width: min(560px, 100%);
-  background: linear-gradient(180deg, rgba(23,31,44,.95), rgba(15,21,31,.95));
+  background: var(--panel);
   border: 1px solid var(--panel-kant);
   border-radius: 22px;
   padding: 32px;
@@ -259,7 +246,7 @@ kbd {
 }
 .kort h1 em { font-style: normal; color: var(--gronn); }
 .kort h2 { margin: 0 0 12px; font-size: clamp(22px, 4.5vw, 30px); letter-spacing: -.02em; }
-.ingress { margin: 0 auto 20px; max-width: 44ch; color: #c2cddd; font-size: 14.5px; line-height: 1.6; }
+.ingress { margin: 0 auto 20px; max-width: 44ch; color: #5c5646; font-size: 14.5px; line-height: 1.6; }
 .finstilt { margin: 14px 0 0; font-size: 11.5px; color: var(--dempet); }
 .fakta {
   margin: 16px auto 20px; max-width: 46ch;
@@ -269,9 +256,9 @@ kbd {
 
 .primar {
   border: 0; border-radius: 13px; cursor: pointer;
-  background: linear-gradient(180deg, #47e58f, #22b46b);
-  color: #06231a; font-weight: 800; letter-spacing: -.01em;
-  box-shadow: 0 8px 22px rgba(45, 200, 125, .28);
+  background: var(--gronn);
+  color: #f4fbf6; font-weight: 800; letter-spacing: -.01em;
+  box-shadow: 0 6px 16px rgba(74, 157, 111, .3);
   transition: transform .1s, filter .15s;
 }
 .primar.stor { display: block; width: 100%; padding: 15px; font-size: 15.5px; }
@@ -286,14 +273,14 @@ kbd {
   font-size: 13.5px; cursor: pointer;
   transition: background .15s, color .15s;
 }
-.sekundar:hover { background: rgba(255,255,255,.05); color: var(--tekst); }
+.sekundar:hover { background: rgba(46,42,34,.06); color: var(--tekst); }
 
 .brief-fakta {
   list-style: none; display: flex; gap: 10px; justify-content: center;
   padding: 0; margin: 0 0 6px;
 }
 .brief-fakta li {
-  flex: 1; background: rgba(255,255,255,.04);
+  flex: 1; background: rgba(46,42,34,.045);
   border: 1px solid var(--panel-kant); border-radius: 13px; padding: 12px 6px;
 }
 .brief-fakta strong { display: block; font-size: 21px; font-variant-numeric: tabular-nums; }
@@ -305,20 +292,20 @@ kbd {
   display: flex; align-items: center; gap: 12px;
   width: 100%; padding: 12px 14px;
   border: 1px solid var(--panel-kant); border-radius: 13px;
-  background: rgba(255,255,255,.03); color: var(--tekst);
+  background: rgba(46,42,34,.03); color: var(--tekst);
   cursor: pointer; font: inherit;
   transition: border-color .15s, background .15s;
 }
-.brettvalg:hover:not(:disabled) { background: rgba(255,255,255,.07); border-color: rgba(111,196,255,.4); }
-.brettvalg.valgt { border-color: var(--gronn); background: rgba(61,220,132,.1); }
+.brettvalg:hover:not(:disabled) { background: rgba(46,42,34,.07); border-color: rgba(63,143,196,.4); }
+.brettvalg.valgt { border-color: var(--gronn); background: rgba(74,157,111,.12); }
 .brettvalg:disabled { opacity: .42; cursor: not-allowed; }
 .brettvalg .nr {
   width: 30px; height: 30px; flex: none;
   display: grid; place-items: center;
-  border-radius: 9px; background: #1b2432;
+  border-radius: 9px; background: #e4d9bf;
   font-size: 12.5px; font-weight: 800; color: var(--dempet);
 }
-.brettvalg.valgt .nr { background: var(--gronn); color: #06231a; }
+.brettvalg.valgt .nr { background: var(--gronn); color: #f4fbf6; }
 .brettvalg .tekst { min-width: 0; }
 .brettvalg .tekst b { display: block; font-size: 13.5px; }
 .brettvalg .tekst i {
