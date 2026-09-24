@@ -83,10 +83,7 @@
   /* -------------------- landskap -------------------- */
   Tegner.prototype.bakgrunn = function () {
     var ctx = this.ctx;
-    var g = ctx.createLinearGradient(0, 0, 0, this.h);
-    g.addColorStop(0, '#131a26');
-    g.addColorStop(1, '#0d121b');
-    ctx.fillStyle = g;
+    ctx.fillStyle = '#ece3d0';
     ctx.fillRect(0, 0, this.w, this.h);
   };
 
@@ -111,26 +108,8 @@
     var pv = this.p(venstre, forst[1]);
     ctx.lineTo(pv[0], pv[1]);
     ctx.closePath();
-    var g = ctx.createLinearGradient(0, 0, 0, this.h * 0.4);
-    g.addColorStop(0, '#0a2233');
-    g.addColorStop(1, '#0d2c40');
-    ctx.fillStyle = g;
+    ctx.fillStyle = '#a9cdd6';
     ctx.fill();
-
-    // bølgestriper
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(120, 190, 225, 0.09)';
-    ctx.lineWidth = 1.2;
-    var steg = 24 * S;
-    for (var y = topp; y < 260 * S; y += 26 * S) {
-      ctx.beginPath();
-      for (var x = venstre; x <= hoyre; x += steg) {
-        var by = y + Math.sin((x * 0.0075 / S) + this.tid * 0.5 + y * 0.03 / S) * 4 * S;
-        var pp = self.p(x, by);
-        if (x === venstre) ctx.moveTo(pp[0], pp[1]); else ctx.lineTo(pp[0], pp[1]);
-      }
-      ctx.stroke();
-    }
     ctx.restore();
 
     // Munkholmen
@@ -138,15 +117,12 @@
     var pm = this.p(m.x, m.y);
     ctx.beginPath();
     ctx.ellipse(pm[0], pm[1], m.r * s, m.r * 0.62 * s, 0, 0, Math.PI * 2);
-    ctx.fillStyle = '#1d2a30';
+    ctx.fillStyle = '#cabd98';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(150,200,220,.25)';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = '#c8d6e0';
+    ctx.fillStyle = '#dd5b48';
     ctx.fillRect(pm[0] - 3 * s, pm[1] - 7 * s, 6 * s, 7 * s);
     if (s > 0.75) {
-      ctx.fillStyle = 'rgba(190, 215, 232, .55)';
+      ctx.fillStyle = 'rgba(46, 42, 34, .55)';
       ctx.font = Math.max(9, 9 * s) + 'px ui-sans-serif, system-ui, sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('Munkholmen', pm[0], pm[1] + m.r * 0.62 * s + 13);
@@ -163,11 +139,8 @@
     }
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
-    ctx.strokeStyle = '#0f3247';
+    ctx.strokeStyle = '#a9cdd6';
     ctx.lineWidth = 26 * S * s;
-    ctx.stroke();
-    ctx.strokeStyle = 'rgba(120, 195, 230, .22)';
-    ctx.lineWidth = Math.max(1, 2 * S * s);
     ctx.stroke();
     ctx.restore();
   };
@@ -178,7 +151,7 @@
 
     // inaktive veier som svak kontekst
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+    ctx.strokeStyle = 'rgba(46,42,34,0.10)';
     ctx.lineWidth = Math.max(1, VEIBREDDE * s * 0.7);
     TT.VEIER.forEach(function (rad) {
       if (motor.aktivNode[rad[0]] && motor.aktivNode[rad[1]]) return;
@@ -190,31 +163,17 @@
       ctx.stroke();
     });
 
-    // kantlinje
-    ctx.strokeStyle = '#1b2534';
-    ctx.lineWidth = (VEIBREDDE + 6) * s;
-    this.veiBaner(motor, ctx);
-    // asfalt
-    ctx.strokeStyle = '#333e4f';
+    // flat, mørk vei — ingen kantlinje eller midtstripe
+    ctx.strokeStyle = '#33322c';
     ctx.lineWidth = VEIBREDDE * s;
     this.veiBaner(motor, ctx);
-
-    // midtstiplet linje
-    if (s > 0.5) {
-      ctx.save();
-      ctx.setLineDash([7 * s, 9 * s]);
-      ctx.strokeStyle = 'rgba(226, 214, 160, .30)';
-      ctx.lineWidth = Math.max(0.8, 1.3 * s);
-      this.veiBaner(motor, ctx);
-      ctx.restore();
-    }
 
     // veinavn ved god zoom
     if (s > 0.95) {
       ctx.save();
       ctx.font = '600 ' + (9.5) + 'px ui-sans-serif, system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(190, 205, 225, .42)';
+      ctx.fillStyle = 'rgba(46, 42, 34, .55)';
       motor.veier.forEach(function (v) {
         if (v.len * s < 96) return;
         var a = TT.NODE_BY_ID[v.a], b = TT.NODE_BY_ID[v.b];
@@ -266,21 +225,16 @@
       ctx.translate(p[0], p[1]);
       ctx.rotate(bil.visVinkel);
 
-      if (bil.sint) {
-        ctx.shadowColor = 'rgba(255, 86, 86, .9)';
-        ctx.shadowBlur = 10;
-      }
-      ctx.fillStyle = bil.sint ? '#ff6b6b' : bil.farge;
+      ctx.fillStyle = bil.sint ? '#dd5b48' : bil.farge;
       rundetRekt(ctx, -L / 2, -B / 2, L, B, Math.min(2.5 * s, B / 2.4));
       ctx.fill();
-      ctx.shadowBlur = 0;
 
       if (s > 0.9) {
-        ctx.fillStyle = 'rgba(10,16,24,.45)';
+        ctx.fillStyle = 'rgba(46,42,34,.35)';
         rundetRekt(ctx, -L * 0.12, -B / 2 + 0.8 * s, L * 0.38, B - 1.6 * s, 1 * s);
         ctx.fill();
         if (bil.bremser) {
-          ctx.fillStyle = '#ff5252';
+          ctx.fillStyle = '#dd5b48';
           ctx.fillRect(-L / 2, -B / 2, Math.max(1, 1.6 * s), B);
         }
       }
@@ -319,15 +273,15 @@
       var p = this.p(n.x, n.y);
       var r = (n.kind === 'port' ? 13 : 12) * S * s;
 
-      ctx.globalAlpha = aktiv ? 1 : 0.22;
+      ctx.globalAlpha = aktiv ? 1 : 0.3;
 
       // sokkel
       ctx.beginPath();
       ctx.arc(p[0], p[1], r + 3, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(10, 15, 22, .78)';
+      ctx.fillStyle = '#fbf7ec';
       ctx.fill();
-      ctx.strokeStyle = motor.lys[n.id] ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.10)';
-      ctx.lineWidth = 1;
+      ctx.strokeStyle = motor.lys[n.id] ? 'rgba(46,42,34,.28)' : 'rgba(46,42,34,.14)';
+      ctx.lineWidth = 1.4;
       ctx.stroke();
 
       ikon(ctx, n.ikon, p[0], p[1], Math.max(7, r * 1.25), aktiv);
@@ -338,10 +292,10 @@
         ctx.textAlign = 'center';
         var bredde = ctx.measureText(tekst).width;
         var ty = p[1] + r + 15;
-        ctx.fillStyle = 'rgba(8, 12, 18, .68)';
+        ctx.fillStyle = '#fbf7ec';
         rundetRekt(ctx, p[0] - bredde / 2 - 5, ty - 10, bredde + 10, 14, 5);
         ctx.fill();
-        ctx.fillStyle = n.kind === 'port' ? '#8fd3b0' : '#dbe6f5';
+        ctx.fillStyle = n.kind === 'port' ? '#4a9d6f' : '#2e2a22';
         ctx.fillText(tekst, p[0], ty);
       }
       ctx.globalAlpha = 1;
@@ -363,14 +317,14 @@
       var r = 17 * S * s;
       ctx.beginPath();
       ctx.arc(p[0], p[1], r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - lys.t / lys.periode));
-      ctx.strokeStyle = lys.erGult() ? 'rgba(255, 190, 60, .95)' : 'rgba(120, 230, 170, .55)';
+      ctx.strokeStyle = lys.erGult() ? '#edac2f' : 'rgba(74, 157, 111, .6)';
       ctx.lineWidth = Math.max(1.6, 2.4 * s);
       ctx.stroke();
 
       if (valgt || hover) {
         ctx.beginPath();
         ctx.arc(p[0], p[1], r + 5 * s, 0, Math.PI * 2);
-        ctx.strokeStyle = valgt ? 'rgba(120, 200, 255, .95)' : 'rgba(255,255,255,.35)';
+        ctx.strokeStyle = valgt ? '#3f8fc4' : 'rgba(46,42,34,.35)';
         ctx.lineWidth = valgt ? 2.2 : 1.2;
         ctx.stroke();
       }
@@ -384,13 +338,11 @@
         var d = 21 * S;
         var q = self.p(n.x + vx * d, n.y + vy * d);
         var gronn = lys.gruppe[kob.vei.id] === lys.fase;
-        var farge = gronn ? (lys.erGult() ? '#ffbe3c' : '#3ddc84') : '#ff5a5a';
+        var farge = gronn ? (lys.erGult() ? '#edac2f' : '#4a9d6f') : '#dd5b48';
         ctx.save();
         ctx.translate(q[0], q[1]);
         ctx.rotate(Math.atan2(vy, vx));
         ctx.fillStyle = farge;
-        ctx.shadowColor = farge;
-        ctx.shadowBlur = 8 * Math.max(0.6, s);
         rundetRekt(ctx, -1.8 * s, -4.5 * s, 3.6 * s, 9 * s, 1.6 * s);
         ctx.fill();
         ctx.restore();
@@ -414,7 +366,7 @@
     ctx.save();
     ctx.setLineDash([10 * s, 8 * s]);
     ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(255, 90, 90, .78)';
+    ctx.strokeStyle = 'rgba(221, 91, 72, .8)';
     ctx.lineWidth = Math.max(2, VEIBREDDE * s * 0.5);
     ctx.beginPath();
     ctx.moveTo(pa[0], pa[1]);
@@ -438,7 +390,7 @@
     ctx.save();
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(10, 15, 22, .85)';
+    ctx.fillStyle = '#fbf7ec';
     ctx.fill();
     ctx.strokeStyle = farge;
     ctx.lineWidth = Math.max(1.2, 2 * s);
@@ -452,8 +404,8 @@
 
   /* -------------------- ikoner -------------------- */
   function ikon(ctx, type, x, y, r, aktiv) {
-    var lys = aktiv ? '#e8eef8' : '#7d8798';
-    var aks = aktiv ? '#7fd4ff' : '#5f6c7d';
+    var lys = aktiv ? '#33322c' : '#a89f88';
+    var aks = aktiv ? '#3f8fc4' : '#b4ac95';
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(r / 10, r / 10);
@@ -493,7 +445,7 @@
         break;
       case 'stasjon':
         ctx.fillRect(-6, -3, 12, 8);
-        ctx.fillStyle = '#0d131c'; ctx.fillRect(-4, -1, 3, 3); ctx.fillRect(1, -1, 3, 3);
+        ctx.fillStyle = '#fbf7ec'; ctx.fillRect(-4, -1, 3, 3); ctx.fillRect(1, -1, 3, 3);
         ctx.fillStyle = aks; ctx.fillRect(-7, -5, 14, 2);
         break;
       case 'tog':
@@ -507,7 +459,7 @@
         break;
       case 'sykehus':
         ctx.fillRect(-6, -6, 12, 12);
-        ctx.fillStyle = '#e2483f';
+        ctx.fillStyle = '#dd5b48';
         ctx.fillRect(-1.6, -4, 3.2, 8); ctx.fillRect(-4.5, -1.6, 9, 3.2);
         break;
       case 'festning':
@@ -579,7 +531,7 @@
         break;
       case 'samfundet':   // det runde røde huset
         ctx.beginPath(); ctx.arc(0, 1, 5.6, 0, Math.PI * 2);
-        ctx.fillStyle = aktiv ? '#a8392e' : '#5c3a36'; ctx.fill();
+        ctx.fillStyle = aktiv ? '#dd5b48' : '#cdb9a6'; ctx.fill();
         ctx.strokeStyle = lys; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(0, 1, 5.6, 0, Math.PI * 2); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(0, -4.6); ctx.lineTo(0, -8); ctx.stroke();
@@ -590,9 +542,9 @@
         ctx.fillStyle = aks; ctx.fillRect(2.5, -1, 4.5, 7);
         break;
       case 'port':
-        ctx.strokeStyle = '#7fe0ac'; ctx.lineWidth = 1.8;
+        ctx.strokeStyle = '#4a9d6f'; ctx.lineWidth = 1.8;
         ctx.beginPath(); ctx.arc(0, 0, 6.5, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = '#7fe0ac';
+        ctx.fillStyle = '#4a9d6f';
         ctx.beginPath(); ctx.moveTo(-2.5, -3.5); ctx.lineTo(3.5, 0); ctx.lineTo(-2.5, 3.5); ctx.closePath(); ctx.fill();
         break;
       default:
